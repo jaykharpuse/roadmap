@@ -1,8 +1,7 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import type { PayloadAction } from '@reduxjs/toolkit';
-import axios from 'axios';
-import type { Review } from '../../types/user/review/review';
 import axiosInstance from '@/helper/axiosInstance';
+import type { Review } from '../../types/user/review/review';
 
 interface ReviewState {
   reviews: Review[];
@@ -22,7 +21,7 @@ export const fetchReviewsByRoadmap = createAsyncThunk(
   'reviews/fetchByRoadmap',
   async (roadmapId: string, thunkAPI) => {
     try {
-      const res = await axios.get(`/api/reviews/roadmap/${roadmapId}`);
+      const res = await axiosInstance.get(`/api/reviews/roadmap/${roadmapId}`);
       return res.data as Review[];
     } catch (err: any) {
       return thunkAPI.rejectWithValue(err.response?.data || 'Failed to fetch reviews');
@@ -34,7 +33,7 @@ export const createReview = createAsyncThunk(
   'reviews/createReview',
   async (reviewData: Partial<Review>, thunkAPI) => {
     try {
-      const res = await axios.post('/api/reviews', reviewData);
+      const res = await axiosInstance.post('/api/reviews', reviewData);
       return res.data as Review;
     } catch (err: any) {
       return thunkAPI.rejectWithValue(err.response?.data || 'Failed to create review');
@@ -58,7 +57,7 @@ export const deleteReview = createAsyncThunk(
   'reviews/deleteReview',
   async (id: string, thunkAPI) => {
     try {
-      await axios.delete(`/api/reviews/${id}`);
+      await axiosInstance.delete(`/api/reviews/${id}`);
       return id;
     } catch (err: any) {
       return thunkAPI.rejectWithValue(err.response?.data || 'Failed to delete review');

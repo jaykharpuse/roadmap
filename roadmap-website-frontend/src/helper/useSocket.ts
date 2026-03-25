@@ -1,7 +1,8 @@
 import { io } from "socket.io-client";
+import { apiBaseUrl } from "./axiosInstance";
 
 // Initialize socket connection
-export const socket = io("http://localhost:8000", {
+export const socket = io(apiBaseUrl, {
   withCredentials: true,
   transports: ['websocket', 'polling'],
   reconnection: true,

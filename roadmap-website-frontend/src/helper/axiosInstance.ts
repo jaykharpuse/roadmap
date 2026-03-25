@@ -1,8 +1,10 @@
 import axios from "axios";
 
+export const apiBaseUrl =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
+
 const axiosInstance = axios.create({
-  // baseURL: "https://roadmap-backend-1-9rcd.onrender.com",
-  baseURL: "http://localhost:8000",
+  baseURL: apiBaseUrl,
   withCredentials: true,
 });
 

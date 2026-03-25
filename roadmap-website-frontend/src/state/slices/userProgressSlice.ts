@@ -2,7 +2,7 @@
 
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
-import axios from "axios";
+import axiosInstance from "../../helper/axiosInstance";
 import type { IUserProgressResponse } from "../../types/user/progress/UserProgress";
 export interface CourseProgress {
   id: string; // unique identifier (e.g. "frontend-dev")
@@ -28,10 +28,9 @@ export const startRoadmap = createAsyncThunk(
   "userProgress/startRoadmap",
   async (roadmapId: string, { rejectWithValue }) => {
     try {
-      const response = await axios.post(
-        `http://localhost:8000/api/progress/user/start/${roadmapId}`,
-        {},
-        { withCredentials: true }
+      const response = await axiosInstance.post(
+        `/api/progress/user/start/${roadmapId}`,
+        {}
       );
       return response.data;
     } catch (error: any) {
@@ -46,10 +45,8 @@ export const getUserRoadmapProgressForDashBoard = createAsyncThunk(
   "userProgress/getUserRoadmapProgressForDashBoard",
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axios.get(
-        `http://localhost:8000/api/progress/user/courses`,
-
-        { withCredentials: true }
+      const response = await axiosInstance.get(
+        `/api/progress/user/courses`
       );
       return response.data;
     } catch (error: any) {
@@ -66,9 +63,8 @@ export const fetchUserProgress = createAsyncThunk(
   "userProgress/fetchUserProgress",
   async (roadmapId: string, { rejectWithValue }) => {
     try {
-      const response = await axios.get(
-        `http://localhost:8000/api/progress/user/roadmap/${roadmapId}`,
-        { withCredentials: true }
+      const response = await axiosInstance.get(
+        `/api/progress/user/roadmap/${roadmapId}`
       );
       return response.data as IUserProgressResponse;
     } catch (error: any) {
@@ -89,10 +85,9 @@ export const updateUserProgress = createAsyncThunk(
     { rejectWithValue }
   ) => {
     try {
-      const response = await axios.patch(
-        `http://localhost:8000/api/progress/user/roadmap/${roadmapId}/${nodeId}`,
-        { status },
-        { withCredentials: true }
+      const response = await axiosInstance.patch(
+        `/api/progress/user/roadmap/${roadmapId}/${nodeId}`,
+        { status }
       );
       return response.data as IUserProgressResponse;
     } catch (error: any) {
@@ -112,7 +107,7 @@ export const upsertUserProgress = createAsyncThunk<
   "userProgress/upsertUserProgress",
   async ({ userId, roadmapId, completedNodes }, thunkAPI) => {
     try {
-      const response = await axios.put(
+      const response = await axiosInstance.put(
         `/api/progress/user/${userId}/roadmap/${roadmapId}`,
         {
           completedNodes,

@@ -1,6 +1,6 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
-import axios from "axios";
+import axiosInstance from "@/helper/axiosInstance";
 import type { ContentSubmission } from "@/types/user/submission/contentSubmission";
 
 export interface ContentSubmissionState {
@@ -19,8 +19,8 @@ export const fetchSubmissions = createAsyncThunk(
   "submissions/fetchAll",
   async (_, thunkAPI) => {
     try {
-      const res = await axios.get("/api/content-submission");
-      return res.data as ContentSubmission[];
+      const res = await axiosInstance.get("/api/submissions");
+      return (res.data?.data ?? res.data) as ContentSubmission[];
     } catch (err: any) {
       return thunkAPI.rejectWithValue(
         err.response?.data || "Failed to fetch submissions"
@@ -33,8 +33,11 @@ export const createSubmission = createAsyncThunk(
   "submissions/create",
   async (submissionData: Partial<ContentSubmission>, thunkAPI) => {
     try {
-      const res = await axios.post("/api/content-submission", submissionData);
-      return res.data as ContentSubmission;
+      const res = await axiosInstance.post(
+        "/api/submissions",
+        submissionData
+      );
+      return (res.data?.data ?? res.data) as ContentSubmission;
     } catch (err: any) {
       return thunkAPI.rejectWithValue(
         err.response?.data || "Failed to create submission"
@@ -50,8 +53,11 @@ export const updateSubmission = createAsyncThunk(
     thunkAPI
   ) => {
     try {
-      const res = await axios.patch(`/api/content-submission/${id}`, updates);
-      return res.data as ContentSubmission;
+      const res = await axiosInstance.patch(
+        `/api/submissions/${id}`,
+        updates
+      );
+      return (res.data?.data ?? res.data) as ContentSubmission;
     } catch (err: any) {
       return thunkAPI.rejectWithValue(
         err.response?.data || "Failed to update submission"
@@ -64,7 +70,7 @@ export const deleteSubmission = createAsyncThunk(
   "submissions/delete",
   async (id: string, thunkAPI) => {
     try {
-      await axios.delete(`/api/content-submission/${id}`);
+      await axiosInstance.delete(`/api/submissions/${id}`);
       return id;
     } catch (err: any) {
       return thunkAPI.rejectWithValue(

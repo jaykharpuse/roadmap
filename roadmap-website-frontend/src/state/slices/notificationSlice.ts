@@ -1,6 +1,6 @@
 import {createSlice, createAsyncThunk} from '@reduxjs/toolkit'; 
 import type { PayloadAction } from '@reduxjs/toolkit';
-import axios  from 'axios';
+import axiosInstance from '@/helper/axiosInstance';
 import type { Notification } from '@/types/user/Notification/notification';
 
 
@@ -24,7 +24,7 @@ export const fetchNotifications = createAsyncThunk(
       'notifications/fetchNotifications', 
         async(userId: string, thunkAPI) => {
               try{
-                  const res = await axios.get(`/api/notification/${userId}`); 
+                  const res = await axiosInstance.get(`/api/notification/${userId}`); 
                   return res.data as Notification[]; 
               }  catch(err: any){
                  return thunkAPI.rejectWithValue(err.response?.data || 'failed to fetch notifications'); 
@@ -37,7 +37,7 @@ export const markNotificationAsRead = createAsyncThunk(
       'notification/markAsRead', 
        async(notificationId: string, thunkAPI) => {
           try{
-              const res = await axios.patch(`/api/notification/read/${notificationId}`); 
+              const res = await axiosInstance.patch(`/api/notification/read/${notificationId}`); 
               return res.data as Notification;
           } catch(err: any){
              return thunkAPI.rejectWithValue(err.response?.data || 'Failed to mark notification as read'); 
@@ -51,7 +51,7 @@ export const markAllNotificationAsRead = createAsyncThunk(
       'notifications/markAllAsRead', 
       async(userId: string, thunkAPI) => {
           try{
-              const res = await axios.patch(`/api/notification/read-all/${userId}`); 
+              const res = await axiosInstance.patch(`/api/notification/read-all/${userId}`); 
               return res.data as Notification[]; 
           }  catch(err: any){
               return thunkAPI.rejectWithValue(err.response?.data || 'failed to mark all as read '); 
@@ -65,7 +65,7 @@ export const deleteNotification = createAsyncThunk(
       'notification/deleteNotification', 
       async(notificationId: string, thunkAPI) => {
            try{
-              await axios.delete(`/api/notification/${notificationId}`); 
+              await axiosInstance.delete(`/api/notification/${notificationId}`); 
               return notificationId; 
            }  catch(err: any){
              return thunkAPI.rejectWithValue(err.response?.data || 'failed to delete notification'); 

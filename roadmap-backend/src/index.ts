@@ -30,11 +30,17 @@ ConnectDatabase();
 
 export const userSocketMap = new Map<string, string>();
 
+const envAllowedOrigins = (process.env.ALLOWED_ORIGINS || process.env.FRONTEND_URL || "")
+  .split(",")
+  .map((origin) => origin.trim())
+  .filter(Boolean);
+
 const staticAllowedOrigins = [
   "https://roadmap-website-frontend-5xdx.vercel.app",
   "https://roadmap-website-frontend.vercel.app",
   "http://localhost:5173",
   "http://localhost:5174",
+  ...envAllowedOrigins,
 ];
 
 const isOriginAllowed = (origin?: string) => {
