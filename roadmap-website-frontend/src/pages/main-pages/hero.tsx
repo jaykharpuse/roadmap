@@ -162,24 +162,29 @@ const navigate = useNavigate();
             icon: Network,
             title: "Ready-Made",
             description: "Access pre-built roadmaps for various topics",
+            action: () => navigate("/roadmaps"),
           },
           {
             icon: Edit3,
             title: "Customizable",
             description: "Build your own roadmap with our easy-to-use editor",
+            action: () => navigate("/generate-roadmap"),
           },
           {
             icon: Download,
             title: "Download & Share",
             description: "Export your roadmaps to PDF and share them with others",
+            action: () => navigate("/roadmaps"),
           },
         ].map((feature, index) => (
           <motion.div
             key={index}
-            className="text-center space-y-4"
+            className="text-center space-y-4 cursor-pointer p-6 rounded-xl hover:bg-[#1E293B]/50 transition-all duration-300"
             variants={featureVariants}
-            whileHover={{ y: -10 }}
+            whileHover={{ y: -10, scale: 1.02 }}
+            whileTap={{ scale: 0.98 }}
             transition={{ duration: 0.3 }}
+            onClick={feature.action}
           >
             <motion.div
               className="w-16 h-16 mx-auto bg-[#1E293B] rounded-xl flex items-center justify-center"

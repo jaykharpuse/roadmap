@@ -26,6 +26,7 @@ const getErrorMessage = (error: unknown): string => {
 const initialState: roadmapState = {
   isLoading: false,
   roadmaps: [],
+  trendingRoadmaps: [],
   roadmap: null,
   paginationMeta: null,
   error: null,
@@ -42,6 +43,36 @@ export const getRoadmaps = createAsyncThunk(
         withCredentials: true,
         params: { page },
         timeout: 15000,
+      });
+      return response.data;
+    } catch (error: unknown) {
+      return rejectWithValue(getErrorMessage(error));
+    }
+  }
+);
+
+export const getTrendingRoadmaps = createAsyncThunk(
+  "roadmap/getTrending",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.get("/roadmap/trending", {
+        withCredentials: true,
+        timeout: 10000,
+      });
+      return response.data;
+    } catch (error: unknown) {
+      return rejectWithValue(getErrorMessage(error));
+    }
+  }
+);
+
+export const seedRoadmaps = createAsyncThunk(
+  "roadmap/seed",
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await axiosInstance.post("/roadmap/seed", {}, {
+        withCredentials: true,
+        timeout: 10000,
       });
       return response.data;
     } catch (error: unknown) {
@@ -80,7 +111,7 @@ export const generateRoadmap = createAsyncThunk(
         },
         { 
           withCredentials: true,
-          timeout: 120000, // 2 minute timeout for AI generation
+          timeout: 90000, // 90 second timeout for faster generation
         }
       );
 
@@ -138,6 +169,21 @@ export const roadmapSlice = createSlice({
           totalPages: action.payload?.totalPages || 1,
           totalItems: action.payload?.totalItems || 0,
         };
+      })
+      // Get Trending Roadmaps
+      .addCase(getTrendingRoadmaps.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(getTrendingRoadmaps.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.trendingRoadmaps = action.payload?.roadmaps || [];
+      })
+      .addCase(getTrendingRoadmaps.rejected, (state) => {
+        state.isLoading = false;
+      })
+      // Seed Roadmaps
+      .addCase(seedRoadmaps.fulfilled, (state) => {
+        state.isLoading = false;
       })
       // Get Roadmap Details
       .addCase(getRoadMapDetails.pending, (state) => {

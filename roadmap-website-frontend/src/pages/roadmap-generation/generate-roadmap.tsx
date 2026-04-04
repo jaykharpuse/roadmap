@@ -19,14 +19,18 @@ import {
   Zap,
   Target,
   BookOpen,
+  FileText,
+  Play,
   Award,
   TrendingUp,
   Calendar,
   User,
   AlertCircle,
   RotateCcw,
+  Share2,
+  Download,
 } from "lucide-react"
-import { socket, registerUserSocket, connectSocket } from "@/helper/useSocket"
+import { socket, registerUserSocket, connectSocket, cleanupSocket } from "@/helper/useSocket"
 import { useAppDispatch, useAppSelector } from "@/hooks/useAppDispatch"
 import { generateRoadmap, resetGenerationState } from "@/state/slices/roadmapSlice"
 import type { IRoadmap } from "@/types/user/roadmap/roadmap.types"
@@ -41,13 +45,10 @@ interface ProgressType {
 }
 
 const progressSteps = [
-  { key: "searching", label: "Searching existing roadmaps", icon: Target },
-  { key: "analyzing", label: "Analyzing prompt", icon: Target },
-  { key: "researching", label: "Researching content", icon: BookOpen },
-  { key: "structuring", label: "Structuring roadmap", icon: TrendingUp },
-  { key: "generating", label: "Generating details", icon: Sparkles },
-  { key: "finalizing", label: "Finalizing roadmap", icon: CheckCircle },
-  { key: "complete", label: "Complete", icon: CheckCircle },
+  { key: "generating", label: "Creating roadmap...", icon: Sparkles },
+  { key: "structuring", label: "Processing response", icon: TrendingUp },
+  { key: "saving", label: "Saving roadmap", icon: CheckCircle },
+  { key: "complete", label: "Complete!", icon: CheckCircle },
 ]
 
 const categoryColors: Record<string, string> = {
@@ -88,6 +89,7 @@ const GenerateRoadmap: React.FC = () => {
 
   // Setup socket listeners
   useEffect(() => {
+    // Connect socket and register user
     connectSocket()
 
     if (user?._id) {
@@ -95,7 +97,7 @@ const GenerateRoadmap: React.FC = () => {
     }
 
     const handleProgressUpdate = ({ step, progress, error: progressError }: ProgressType) => {
-      console.log('Progress update:', { step, progress, error: progressError })
+      console.log('📊 Progress update:', { step, progress, error: progressError })
       setCurrentProgress({ step, progress, error: progressError })
 
       const stepIndex = progressSteps.findIndex((s) => s.key === step)
@@ -103,13 +105,19 @@ const GenerateRoadmap: React.FC = () => {
         setCurrentStep(stepIndex)
       }
 
-      // Only show error toast for actual errors, not info messages
-      if (progressError && !progressError.includes('Searching') && !progressError.includes('Checking')) {
-        toast.error(`⚠️ ${progressError}`)
+      // Show info messages briefly, errors more prominently
+      if (progressError) {
+        if (progressError.toLowerCase().includes('error') || progressError.toLowerCase().includes('failed')) {
+          toast.error(`⚠️ ${progressError}`)
+        } else if (!progressError.includes('Searching') && !progressError.includes('Checking')) {
+          // Info messages - don't spam the user
+        }
       }
 
+      // Handle completion
       if (step === 'complete' && progress === 100) {
         setGenerationTimeout(false)
+        toast.success("🎉 Roadmap generated successfully!")
       }
     }
 
@@ -117,17 +125,18 @@ const GenerateRoadmap: React.FC = () => {
 
     return () => {
       socket.off("roadmap-progress", handleProgressUpdate)
+      cleanupSocket()
     }
   }, [user])
 
-  // Setup generation timeout (2.5 minutes)
+  // Setup generation timeout (3 minutes - increased for AI processing)
   useEffect(() => {
     if (!isLoading) return
 
     const timeoutId = setTimeout(() => {
       setGenerationTimeout(true)
-      toast.error("Generation is taking longer than expected. You can retry or try a simpler prompt.")
-    }, 150000) // 2.5 minutes
+      toast.warning("⏱️ Generation is taking longer than expected. Please wait or try a simpler prompt.")
+    }, 180000) // 3 minutes
 
     return () => clearTimeout(timeoutId)
   }, [isLoading])
@@ -245,6 +254,74 @@ const GenerateRoadmap: React.FC = () => {
   const formatDuration = (duration?: { value: number; unit: string }) => {
     if (!duration) return "Not specified"
     return `${duration.value} ${duration.unit}`
+  }
+
+  const getResourceIcon = (type?: string) => {
+    const normalized = type?.toLowerCase() || "article"
+    if (normalized.includes("video")) return <Play className="w-3 h-3" />
+    if (normalized.includes("course")) return <Award className="w-3 h-3" />
+    if (normalized.includes("doc")) return <BookOpen className="w-3 h-3" />
+    if (normalized.includes("article")) return <FileText className="w-3 h-3" />
+    return <BookOpen className="w-3 h-3" />
+  }
+
+  const handleShareGenerated = async () => {
+    if (!generatedRoadmap?._id) {
+      toast.error("Roadmap link not available yet")
+      return
+    }
+
+    const shareUrl = `${window.location.origin}/details/${generatedRoadmap._id}`
+    const shareData = {
+      title: generatedRoadmap.title || "Roadmap",
+      text: `Check out this learning roadmap: ${generatedRoadmap.title || "Roadmap"}`,
+      url: shareUrl,
+    }
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData)
+        toast.success("Shared successfully!")
+      } else {
+        await navigator.clipboard.writeText(shareUrl)
+        toast.success("Link copied to clipboard!")
+      }
+    } catch (error) {
+      try {
+        await navigator.clipboard.writeText(shareUrl)
+        toast.success("Link copied to clipboard!")
+      } catch {
+        toast.error("Failed to share")
+      }
+    }
+  }
+
+  const handleDownloadGenerated = () => {
+    if (!generatedRoadmap) {
+      toast.error("No roadmap data available")
+      return
+    }
+
+    const roadmapData = {
+      title: generatedRoadmap.title,
+      description: generatedRoadmap.description,
+      category: generatedRoadmap.category,
+      difficulty: generatedRoadmap.difficulty,
+      estimatedDuration: generatedRoadmap.estimatedDuration,
+      nodes: generatedRoadmap.nodes || [],
+      exportedAt: new Date().toISOString(),
+    }
+
+    const blob = new Blob([JSON.stringify(roadmapData, null, 2)], { type: "application/json" })
+    const url = URL.createObjectURL(blob)
+    const a = document.createElement("a")
+    a.href = url
+    a.download = `${(roadmapData.title || "roadmap").replace(/\s+/g, "-").toLowerCase()}.json`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    URL.revokeObjectURL(url)
+    toast.success("Roadmap downloaded!")
   }
 
   const resetForm = () => {
@@ -574,6 +651,79 @@ const GenerateRoadmap: React.FC = () => {
                       </div>
                     )}
 
+                    {/* Learning Path Preview */}
+                    {generatedRoadmap.nodes && generatedRoadmap.nodes.length > 0 && (
+                      <div className="space-y-3 pt-4 border-t border-[#374151]">
+                        <h4 className="text-[#60A5FA] font-semibold flex items-center gap-2">
+                          <Target className="w-4 h-4" />
+                          Learning Path ({generatedRoadmap.nodes.length} sections)
+                        </h4>
+                        <div className="space-y-2 max-h-64 overflow-y-auto pr-2">
+                          {generatedRoadmap.nodes.map((node: any, index: number) => (
+                            <div 
+                              key={node._id || index} 
+                              className="flex items-start gap-3 p-3 bg-[#0F172A] rounded-lg hover:bg-[#1E293B] transition-colors"
+                            >
+                              <div className="flex items-center justify-center w-6 h-6 bg-[#3B82F6] text-white text-xs font-bold rounded-full shrink-0">
+                                {index + 1}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="text-[#E2E8F0] font-medium truncate">{node.title}</div>
+                                {node.description && (
+                                  <p className="text-[#9CA3AF] text-sm line-clamp-1">{node.description}</p>
+                                )}
+                                <div className="flex items-center gap-2 mt-1 text-xs text-[#9CA3AF]">
+                                  {node.estimatedDuration && (
+                                    <span className="flex items-center gap-1">
+                                      <Clock className="w-3 h-3" />
+                                      {node.estimatedDuration.value} {node.estimatedDuration.unit}
+                                    </span>
+                                  )}
+                                  {node.children?.length > 0 && (
+                                    <span>• {node.children.length} subtopics</span>
+                                  )}
+                                  {node.resources?.length > 0 && (
+                                    <span>• {node.resources.length} resources</span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Resources Preview */}
+                    {generatedRoadmap.nodes?.some((node: any) => node.resources?.length > 0) && (
+                      <div className="space-y-3 pt-4 border-t border-[#374151]">
+                        <h4 className="text-[#60A5FA] font-semibold flex items-center gap-2">
+                          <BookOpen className="w-4 h-4" />
+                          Resources Preview
+                        </h4>
+                        <div className="space-y-3">
+                          {generatedRoadmap.nodes
+                            .filter((node: any) => node.resources?.length > 0)
+                            .slice(0, 3)
+                            .map((node: any, index: number) => (
+                              <div key={index} className="bg-[#0F172A] rounded-lg p-3">
+                                <div className="text-[#E2E8F0] text-sm font-semibold mb-2">{node.title}</div>
+                                <div className="flex flex-wrap gap-2">
+                                  {node.resources.slice(0, 4).map((resource: any, rIndex: number) => (
+                                    <span
+                                      key={rIndex}
+                                      className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-[#1E293B] text-[#93C5FD] rounded-md"
+                                    >
+                                      {getResourceIcon(resource.resourceType || resource.type)}
+                                      {resource.title}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            ))}
+                        </div>
+                      </div>
+                    )}
+
                     {/* Prerequisites */}
                     {generatedRoadmap.prerequisites && generatedRoadmap.prerequisites.length > 0 && (
                       <div className="space-y-2">
@@ -582,9 +732,9 @@ const GenerateRoadmap: React.FC = () => {
                           Prerequisites
                         </h4>
                         <div className="space-y-1">
-                          {generatedRoadmap.prerequisites.map((prereq, index) => (
+                          {generatedRoadmap.prerequisites.map((prereq: any, index: number) => (
                             <div key={index} className="text-[#E2E8F0] text-sm">
-                              • {prereq}
+                              • {typeof prereq === 'string' ? prereq : prereq.title || 'Unknown'}
                             </div>
                           ))}
                         </div>
@@ -624,14 +774,41 @@ const GenerateRoadmap: React.FC = () => {
               </Card>
 
               {/* Action Buttons */}
-              <div className="flex gap-4 justify-center">
-                <Button className="bg-[#3B82F6] hover:bg-[#2563EB] text-white">
+              <div className="flex flex-wrap gap-4 justify-center">
+                <Button 
+                  className="bg-[#3B82F6] hover:bg-[#2563EB] text-white"
+                  onClick={() => {
+                    if (generatedRoadmap._id) {
+                      navigate(`/details/${generatedRoadmap._id}`)
+                    }
+                  }}
+                >
                   <BookOpen className="w-4 h-4 mr-2" />
                   Start Learning
                 </Button>
-                <Button variant="outline" className="border-[#374151] text-[#E2E8F0] hover:bg-[#1E293B]">
-                  <Star className="w-4 h-4 mr-2" />
-                  Save Roadmap
+                <Button 
+                  variant="outline" 
+                  className="border-[#374151] text-[#E2E8F0] hover:bg-[#1E293B]"
+                  onClick={resetForm}
+                >
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Generate Another
+                </Button>
+                <Button
+                  variant="outline"
+                  className="border-[#374151] text-[#E2E8F0] hover:bg-[#1E293B]"
+                  onClick={handleShareGenerated}
+                >
+                  <Share2 className="w-4 h-4 mr-2" />
+                  Share
+                </Button>
+                <Button
+                  variant="outline"
+                  className="border-[#374151] text-[#E2E8F0] hover:bg-[#1E293B]"
+                  onClick={handleDownloadGenerated}
+                >
+                  <Download className="w-4 h-4 mr-2" />
+                  Download
                 </Button>
               </div>
             </motion.div>

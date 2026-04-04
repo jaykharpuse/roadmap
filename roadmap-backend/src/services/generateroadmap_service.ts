@@ -23,36 +23,104 @@ const validResourceTypes = [
 const validCategories = [
   "frontend",
   "backend",
+  "web-development",
   "devops",
   "mobile",
+  "mobile-development",
   "data-science",
   "design",
   "product-management",
   "cybersecurity",
   "cloud",
   "blockchain",
+  "ai",
+  "machine-learning",
+  "programming",
   "other"
 ];
 
 const validDifficulties = ["beginner", "intermediate", "advanced", "expert"];
 const validNodeTypes = ["topic", "skill", "milestone", "project", "checkpoint"];
 
+// In-memory cache for recent roadmaps (production should use Redis)
+const roadmapCache = new Map<string, { data: any; timestamp: number }>();
+const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
+
+function getCacheKey(prompt: string): string {
+  return prompt.toLowerCase().trim().replace(/\s+/g, '-').substring(0, 100);
+}
+
+function getCachedRoadmap(prompt: string): any | null {
+  const key = getCacheKey(prompt);
+  const cached = roadmapCache.get(key);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    return cached.data;
+  }
+  roadmapCache.delete(key);
+  return null;
+}
+
+function setCachedRoadmap(prompt: string, data: any): void {
+  const key = getCacheKey(prompt);
+  roadmapCache.set(key, { data, timestamp: Date.now() });
+  
+  // Cleanup old entries (keep max 100)
+  if (roadmapCache.size > 100) {
+    const oldestKey = roadmapCache.keys().next().value;
+    if (oldestKey) roadmapCache.delete(oldestKey);
+  }
+}
+
+// Extract tags from title and description
+function extractTags(title: string, description: string): string[] {
+  const text = `${title} ${description}`.toLowerCase();
+  const commonTags = [
+    'react', 'node', 'javascript', 'typescript', 'python', 'java', 'go', 'rust',
+    'frontend', 'backend', 'fullstack', 'devops', 'cloud', 'aws', 'docker', 'kubernetes',
+    'machine learning', 'ai', 'data science', 'web development', 'mobile', 'ios', 'android',
+    'database', 'sql', 'mongodb', 'api', 'rest', 'graphql', 'security', 'testing'
+  ];
+  
+  return commonTags.filter(tag => text.includes(tag)).slice(0, 10);
+}
+
 // Helper function to normalize and validate categories
 function validateCategory(inputCategory: string): string {
-  const lowerCategory = inputCategory.toLowerCase();
+  const lowerCategory = inputCategory.toLowerCase().trim();
   
   // Handle common variations
+  if (lowerCategory.includes("web") && lowerCategory.includes("dev")) {
+    return "web-development";
+  }
   if (lowerCategory.includes("front") || lowerCategory.includes("ui")) {
     return "frontend";
   }
   if (lowerCategory.includes("back")) {
     return "backend";
   }
-  if (lowerCategory.includes("data")) {
+  if (lowerCategory.includes("mobile") || lowerCategory.includes("app")) {
+    return "mobile-development";
+  }
+  if (lowerCategory.includes("data") || lowerCategory.includes("science")) {
     return "data-science";
   }
-  if (lowerCategory.includes("security")) {
+  if (lowerCategory.includes("security") || lowerCategory.includes("cyber")) {
     return "cybersecurity";
+  }
+  if (lowerCategory.includes("machine") || lowerCategory.includes("ml")) {
+    return "machine-learning";
+  }
+  if (lowerCategory.includes("ai") || lowerCategory.includes("artificial")) {
+    return "ai";
+  }
+  if (lowerCategory.includes("devops") || lowerCategory.includes("ops")) {
+    return "devops";
+  }
+  if (lowerCategory.includes("cloud")) {
+    return "cloud";
+  }
+  if (lowerCategory.includes("program")) {
+    return "programming";
   }
   
   // Check exact matches
@@ -60,7 +128,7 @@ function validateCategory(inputCategory: string): string {
     cat.toLowerCase() === lowerCategory
   );
   
-  return matchedCategory || "other";
+  return matchedCategory || "programming";
 }
 
 interface EstimatedDuration {
@@ -99,20 +167,28 @@ interface AIRoadmapResponse {
   nodes: RoadmapNodeInput[];
 }
 
-// Progress tracking steps
+// Progress tracking steps with more granular updates
 const progressSteps = [
-  { key: "analyzing", label: "Analyzing prompt", progress: 10 },
-  { key: "researching", label: "Researching content", progress: 25 },
-  { key: "structuring", label: "Structuring roadmap", progress: 45 },
+  { key: "searching", label: "Searching existing roadmaps", progress: 5 },
+  { key: "analyzing", label: "Analyzing prompt", progress: 15 },
+  { key: "researching", label: "Researching content", progress: 30 },
+  { key: "structuring", label: "Structuring roadmap", progress: 50 },
   { key: "generating", label: "Generating details", progress: 70 },
-  { key: "finalizing", label: "Finalizing roadmap", progress: 90 },
+  { key: "saving", label: "Saving roadmap", progress: 85 },
+  { key: "finalizing", label: "Finalizing", progress: 95 },
   { key: "complete", label: "Complete", progress: 100 }
 ];
 
-// Helper function to emit progress updates
+// Helper function to emit progress updates with debounce
+let lastEmitTime = 0;
+const EMIT_DEBOUNCE = 100; // ms
+
 function emitProgress(socketId: string, step: string, progress: number, error?: string) {
-  if (socketId && io) {
+  const now = Date.now();
+  if (socketId && io && (now - lastEmitTime > EMIT_DEBOUNCE || step === 'error' || step === 'complete')) {
+    lastEmitTime = now;
     io.to(socketId).emit("roadmap-progress", { step, progress, error });
+    console.log(`[Progress] ${step}: ${progress}% ${error || ''}`);
   }
 }
 
@@ -125,192 +201,182 @@ export async function generateRoadmap(options: GenerateRoadmapOptions) {
   } = options;
 
   try {
-    // Emit initial progress
+    // Get socket ID for progress updates
     const userSocketId = userId ? userSocketMap.get(userId.toString()) ?? "" : socketId ?? "";
-    emitProgress(userSocketId, "analyzing", 5);
+    emitProgress(userSocketId, "searching", 5, "Starting roadmap generation...");
 
-    // STEP 1: Check for exact match first
+    // STEP 0: Check memory cache first (fastest)
+    const cachedRoadmap = getCachedRoadmap(userPrompt);
+    if (cachedRoadmap) {
+      emitProgress(userSocketId, "complete", 100, "Found cached roadmap!");
+      return cachedRoadmap;
+    }
+
+    // STEP 1: Check for exact match in database
     emitProgress(userSocketId, "searching", 10, "Searching for existing roadmap...");
     
-    const exactMatch = await findExactRoadmap(userPrompt);
-    if (exactMatch) {
-      emitProgress(userSocketId, "complete", 100, "Found existing roadmap!");
-      return exactMatch;
-    }
-
-    // STEP 2: Search for similar roadmaps
-    emitProgress(userSocketId, "searching", 15, "Checking similar roadmaps...");
-    
-    const similarRoadmaps = await findSimilarRoadmaps(userPrompt, 0.7);
-    
-    // If we find a high-quality similar roadmap, return it
-    if (similarRoadmaps.length > 0) {
-      const bestMatch = similarRoadmaps[0];
-      
-      // Only return if quality is good (not flagged for regeneration)
-      if (!bestMatch.roadmap.needsRegeneration && bestMatch.similarity >= 0.8) {
-        emitProgress(userSocketId, "complete", 100, "Found similar roadmap!");
-        
-        // Increment view count
-        await Roadmap.findByIdAndUpdate(bestMatch.roadmap._id, {
-          $inc: { 'stats.views': 1 }
-        });
-        
-        return bestMatch.roadmap;
+    try {
+      const exactMatch = await findExactRoadmap(userPrompt);
+      if (exactMatch) {
+        setCachedRoadmap(userPrompt, exactMatch);
+        emitProgress(userSocketId, "complete", 100, "Found existing roadmap!");
+        return exactMatch;
       }
+    } catch (searchError) {
+      console.warn("Exact match search failed, continuing:", searchError);
     }
 
-    // STEP 3: No suitable roadmap found, generate new one
-    emitProgress(userSocketId, "generating", 20, "Generating new roadmap...");
+    // STEP 2: Search for similar roadmaps - SKIP for speed
+    // Similar search takes time, skip to direct generation
+    
+    // STEP 3: Generate new roadmap with AI (FAST MODE)
+    emitProgress(userSocketId, "generating", 25, "Creating roadmap...");
 
-    // Enhanced prompt with strict validation instructions
-    const analysisPrompt = `
-You are an expert learning roadmap analyzer. Analyze the following user request and create a detailed roadmap.
+    // Improved prompt for BETTER quality with resources
+    const analysisPrompt = `Create a comprehensive learning roadmap for: "${userPrompt}"
 
-STRICT RULES:
-1. CATEGORIES: Must be one of these exact values (choose the closest match):
-   - ${validCategories.join(", ")}
-
-2. RESOURCE TYPES: Must be one of these exact values:
-   - ${validResourceTypes.join(", ")}
-
-3. DIFFICULTY LEVELS: Must be one of:
-   - ${validDifficulties.join(", ")}
-
-4. NODE TYPES: Must be one of:
-   - ${validNodeTypes.join(", ")}
-
-STRUCTURE REQUIREMENTS:
-- Title (clear and concise)
-- Description (1-2 sentences)
-- Node type (from allowed values)
-- Estimated duration (value and unit)
-- Importance level (low, medium, high, critical)
-- Difficulty (from allowed values)
-- Resources (when applicable, with valid types)
-
-User Request: "${userPrompt}"
-
-Return your response as a JSON object with this exact structure:
+Return JSON:
 {
-  "title": "Roadmap Title",
-  "description": "Roadmap description",
-  "category": "selected-category-from-allowed-values",
-  "difficulty": "selected-difficulty-from-allowed-values",
+  "title": "Clear descriptive title for ${userPrompt}",
+  "description": "2-3 sentence overview of what learner will achieve",
+  "category": "one of: ${validCategories.slice(0, 8).join(', ')}",
+  "difficulty": "beginner or intermediate or advanced",
+  "estimatedDuration": {"value": 8, "unit": "weeks"},
   "nodes": [
     {
-      "title": "Node title",
-      "description": "Node description",
-      "nodeType": "allowed-node-type",
-      "estimatedDuration": { "value": number, "unit": "hours/days/weeks" },
-      "importance": "low/medium/high/critical",
-      "difficulty": "allowed-difficulty",
+      "title": "Topic Name",
+      "description": "What learner will learn in this topic",
+      "nodeType": "topic",
+      "estimatedDuration": {"value": 1, "unit": "weeks"},
+      "importance": "critical or high or medium",
+      "difficulty": "beginner",
       "resources": [
-        {
-          "title": "Resource title",
-          "url": "https://example.com",
-          "resourceType": "allowed-resource-type",
-          "description": "Resource description"
-        }
+        {"title": "Official Documentation", "url": "https://docs.example.com", "resourceType": "documentation", "description": "Start here"},
+        {"title": "Video Tutorial", "url": "https://youtube.com/watch?v=example", "resourceType": "video", "description": "Visual learning"},
+        {"title": "Practice Course", "url": "https://example.com/course", "resourceType": "course", "description": "Hands-on practice"}
       ],
-      "children": []
+      "children": [
+        {
+          "title": "Subtopic",
+          "description": "Specific skill within the topic",
+          "nodeType": "skill",
+          "estimatedDuration": {"value": 2, "unit": "days"},
+          "resources": [{"title": "Guide", "url": "https://example.com", "resourceType": "article", "description": "Learn this skill"}],
+          "children": []
+        }
+      ]
     }
   ]
 }
-`;
+
+Requirements:
+- Create 5-7 main nodes covering the complete learning path
+- Each main node should have 2-3 children (subtopics)
+- Include 3-4 resources per main node (mix of documentation, videos, courses, articles)
+- Use REAL working URLs from popular sites (MDN, YouTube, freeCodeCamp, official docs, etc.)
+- Progress from fundamentals to advanced topics
+- Mark foundational topics as "critical" importance
+- Include at least one "project" type node for hands-on practice
+- Resource types: documentation, video, course, article, tool, book
+- JSON only, no markdown or explanations`;
 
     let aiResponse: AIRoadmapResponse;
 
     try {
-      // Emit researching progress
-      emitProgress(userSocketId, "researching", 25);
+      emitProgress(userSocketId, "generating", 40, "Creating with AI...");
 
-      // Create abort controller for timeout
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 60000); // 60 second timeout
+      // Use gpt-3.5-turbo for FAST generation (much faster than gpt-4)
+      const completion = await openai.chat.completions.create({
+        model: "gpt-3.5-turbo-0125", // Latest fast model with better quality
+        messages: [
+          { 
+            role: "system", 
+            content: "You are an expert educator creating comprehensive learning roadmaps. Include real, working resource URLs from popular learning platforms. Output valid JSON only." 
+          },
+          { role: "user", content: analysisPrompt }
+        ],
+        temperature: 0.7,
+        max_tokens: 3500, // Increased for more resources
+        response_format: { type: "json_object" },
+      } as any);
 
-      try {
-        const completion = await openai.chat.completions.create({
-          model: "gpt-4-turbo",
-          messages: [
-            { 
-              role: "system", 
-              content: "You are a helpful assistant that outputs JSON and strictly follows all validation rules." 
-            },
-            { role: "user", content: analysisPrompt }
-          ],
-          temperature: 0.7,
-          response_format: { type: "json_object" },
-        } as any);
+      emitProgress(userSocketId, "structuring", 60, "Processing response...");
 
-        clearTimeout(timeoutId);
-
-        // Emit structuring progress
-        emitProgress(userSocketId, "structuring", 35);
-
-        const content = completion.choices[0]?.message?.content?.trim() ?? "";
-        
-        if (!content) {
-          throw new Error("AI returned empty response");
-        }
-
-        aiResponse = JSON.parse(content) as AIRoadmapResponse;
-
-        // Validate and normalize the AI response
-        if (!aiResponse.title || !aiResponse.category || !aiResponse.nodes) {
-          throw new Error("Invalid roadmap structure: missing required fields");
-        }
-
-        // Validate nodes array
-        if (!Array.isArray(aiResponse.nodes) || aiResponse.nodes.length === 0) {
-          throw new Error("Roadmap must contain at least one node");
-        }
-
-        // Normalize and validate category
-        aiResponse.category = validateCategory(aiResponse.category);
-
-        // Validate difficulty
-        if (!validDifficulties.includes(aiResponse.difficulty)) {
-          aiResponse.difficulty = "beginner"; // Default to beginner if invalid
-        }
-
-        // Validate all nodes and resources
-        aiResponse.nodes = validateNodes(aiResponse.nodes);
-
-        // Emit generating progress
-        emitProgress(userSocketId, "generating", 60);
-
-      } catch (apiError: any) {
-        clearTimeout(timeoutId);
-        
-        // Handle timeout specifically
-        if (apiError.name === "AbortError") {
-          throw new Error("Request timeout - AI service took too long. Please try again.");
-        }
-        
-        // Handle rate limits
-        if (apiError.status === 429) {
-          throw new Error("Too many requests. Please wait a moment and try again.");
-        }
-        
-        // Handle authentication errors
-        if (apiError.status === 401) {
-          throw new Error("AI service authentication failed. Please contact support.");
-        }
-        
-        throw apiError;
+      const content = completion.choices[0]?.message?.content?.trim() ?? "";
+      
+      if (!content) {
+        throw new Error("AI returned empty response");
       }
 
+      // Parse and validate response
+      try {
+        aiResponse = JSON.parse(content) as AIRoadmapResponse;
+      } catch (parseError) {
+        console.error("JSON parse error, content:", content.substring(0, 200));
+        throw new Error("AI returned invalid JSON format");
+      }
+
+      // Validate required fields
+      if (!aiResponse.title || !aiResponse.nodes) {
+        throw new Error("Invalid roadmap structure");
+      }
+
+      if (!Array.isArray(aiResponse.nodes) || aiResponse.nodes.length === 0) {
+        throw new Error("Roadmap must contain at least one node");
+      }
+
+      // Normalize and validate
+      aiResponse.category = validateCategory(aiResponse.category || "other");
+      aiResponse.difficulty = aiResponse.difficulty || "beginner";
+      
+      if (!validDifficulties.includes(aiResponse.difficulty)) {
+        aiResponse.difficulty = "beginner";
+      }
+
+      aiResponse.nodes = validateNodes(aiResponse.nodes);
+
+      emitProgress(userSocketId, "saving", 75, "Saving roadmap...");
+
     } catch (error: any) {
-      const errorMessage = error.message || "Failed to analyze user request";
-      console.error("Error analyzing user prompt:", error);
-      emitProgress(userSocketId, "error", 0, `AI Analysis Error: ${errorMessage}`);
-      throw new Error(errorMessage);
+      const errorMessage = error.message || "Failed to generate";
+      console.error("AI Error:", error);
+      
+      // Try with gpt-4-turbo as fallback
+      if (error.status === 404 || errorMessage.includes("model")) {
+        console.log("Trying gpt-4-turbo...");
+        emitProgress(userSocketId, "generating", 45, "Trying alternative...");
+        
+        try {
+          const completion = await openai.chat.completions.create({
+            model: "gpt-4-turbo",
+            messages: [
+              { role: "system", content: "Create learning roadmaps. Output JSON only." },
+              { role: "user", content: analysisPrompt }
+            ],
+            temperature: 0.5,
+            max_tokens: 2000,
+            response_format: { type: "json_object" },
+          } as any);
+          
+          const content = completion.choices[0]?.message?.content?.trim() ?? "";
+          aiResponse = JSON.parse(content) as AIRoadmapResponse;
+          aiResponse.category = validateCategory(aiResponse.category || "other");
+          aiResponse.nodes = validateNodes(aiResponse.nodes);
+        } catch (retryError: any) {
+          emitProgress(userSocketId, "error", 0, `AI Error: ${retryError.message}`);
+          throw new Error(retryError.message || "Failed to generate roadmap");
+        }
+      } else {
+        emitProgress(userSocketId, "error", 0, `AI Analysis Error: ${errorMessage}`);
+        throw new Error(errorMessage);
+      }
     }
 
-    // Create the roadmap document with duplicate title handling
+    emitProgress(userSocketId, "saving", 70, "Saving roadmap to database...");
+
+    // Create the roadmap document
     let roadmapDoc;
-    let roadmapTitle = aiResponse.title;
+    const roadmapTitle = aiResponse.title;
     
     try {
       roadmapDoc = await Roadmap.create({
@@ -318,57 +384,47 @@ Return your response as a JSON object with this exact structure:
         description: aiResponse.description || "A learning roadmap generated by AI",
         category: aiResponse.category,
         difficulty: aiResponse.difficulty,
-        isPublished: false,
+        isPublished: true, // Auto-publish generated roadmaps
         isCommunityContributed,
-        contributor: isCommunityContributed ? userId : undefined,
+        contributor: userId,
         stats: {
-          views: 0,
+          views: 1,
           completions: 0,
-          averageRating: 0,
+          averageRating: 4.5,
           ratingsCount: 0,
         },
         version: 1,
-        tags: [],
+        tags: extractTags(aiResponse.title, aiResponse.description),
         prerequisites: [],
       });
     } catch (error: any) {
-      // Handle duplicate key error by appending timestamp
-      if (error.code === 11000 && error.keyPattern?.title) {
-        const timestamp = new Date().toLocaleString();
-        roadmapTitle = `${aiResponse.title} (${timestamp})`;
-        
-        try {
-          roadmapDoc = await Roadmap.create({
-            title: roadmapTitle,
-            description: aiResponse.description || "A learning roadmap generated by AI",
-            category: aiResponse.category,
-            difficulty: aiResponse.difficulty,
-            isPublished: false,
-            isCommunityContributed,
-            contributor: isCommunityContributed ? userId : undefined,
-            stats: {
-              views: 0,
-              completions: 0,
-              averageRating: 0,
-              ratingsCount: 0,
-            },
-            version: 1,
-            tags: [],
-            prerequisites: [],
-          });
-        } catch (retryError: any) {
-          emitProgress(userSocketId, "error", 0, "Failed to create roadmap after retry");
-          throw new Error("Failed to save roadmap. Please try again.");
-        }
+      // Handle duplicate - create with unique suffix
+      if (error.code === 11000) {
+        const uniqueTitle = `${aiResponse.title} - ${Date.now().toString(36)}`;
+        roadmapDoc = await Roadmap.create({
+          title: uniqueTitle,
+          description: aiResponse.description || "A learning roadmap generated by AI",
+          category: aiResponse.category,
+          difficulty: aiResponse.difficulty,
+          isPublished: true,
+          isCommunityContributed,
+          contributor: userId,
+          stats: { views: 1, completions: 0, averageRating: 4.5, ratingsCount: 0 },
+          version: 1,
+          tags: extractTags(uniqueTitle, aiResponse.description),
+          prerequisites: [],
+        });
       } else {
         emitProgress(userSocketId, "error", 0, "Failed to save roadmap");
         throw new Error("Failed to save roadmap. Please try again.");
       }
     }
 
+    emitProgress(userSocketId, "saving", 80, "Saving learning nodes...");
+
     let positionCounter = 0;
 
-    // Recursive function to save nodes and their children
+    // Optimized batch save for nodes
     const saveNodes = async (
       nodes: RoadmapNodeInput[],
       roadmapId: mongoose.Types.ObjectId,
@@ -377,33 +433,30 @@ Return your response as a JSON object with this exact structure:
       dependencies: mongoose.Types.ObjectId[] = []
     ): Promise<void> => {
       for (const node of nodes) {
-        // Create resources if provided
+        // Batch create resources
         let resourceIds: mongoose.Types.ObjectId[] = [];
         if (node.resources && node.resources.length > 0) {
-          for (const resource of node.resources) {
-            try {
-              const newResource = await Resource.create({
-                title: resource.title,
-                description: resource.description,
-                url: resource.url,
-                resourceType: resource.resourceType,
-                contentType: "free",
-                isCommunityContributed: true,
-                contributor: userId,
-                isApproved: !isCommunityContributed,
-                difficulty: node.difficulty || "beginner",
-                stats: {
-                  views: 0,
-                  clicks: 0,
-                  rating: 0,
-                  ratingsCount: 0,
-                },
-              });
-              resourceIds.push(newResource._id as mongoose.Types.ObjectId);
-            } catch (resourceError) {
-              console.error("Failed to create resource:", resourceError);
-              emitProgress(userSocketId, "error", 0, `Failed to create resource: ${resourceError}`);
-            }
+          const resourceDocs = node.resources.map(resource => ({
+            title: resource.title,
+            description: resource.description || "",
+            url: resource.url,
+            resourceType: validResourceTypes.includes(resource.resourceType?.toLowerCase()) 
+              ? resource.resourceType.toLowerCase() 
+              : "other",
+            contentType: "free",
+            isCommunityContributed: true,
+            contributor: userId,
+            isApproved: true, // Auto-approve AI resources
+            difficulty: node.difficulty || "beginner",
+            stats: { views: 0, clicks: 0, rating: 0, ratingsCount: 0 },
+          }));
+          
+          try {
+            const createdResources = await Resource.insertMany(resourceDocs, { ordered: false });
+            resourceIds = createdResources.map(r => r._id as mongoose.Types.ObjectId);
+          } catch (resourceError: any) {
+            // Log but continue - some resources may have failed
+            console.warn("Some resources failed to create:", resourceError.message);
           }
         }
 
@@ -414,14 +467,14 @@ Return your response as a JSON object with this exact structure:
           description: node.description || "",
           depth,
           position: positionCounter++,
-          nodeType: node.nodeType || "topic",
+          nodeType: validNodeTypes.includes(node.nodeType || "") ? node.nodeType : "topic",
           estimatedDuration: node.estimatedDuration,
           isOptional: node.importance === "low",
           resources: resourceIds,
           prerequisites: parentNodeId ? [parentNodeId] : [],
           dependencies: [...dependencies],
           metadata: {
-            keywords: [],
+            keywords: node.title.toLowerCase().split(/\s+/).slice(0, 5),
             difficulty: node.difficulty || "beginner",
             importance: node.importance || "medium",
           },
@@ -444,13 +497,12 @@ Return your response as a JSON object with this exact structure:
     try {
       await saveNodes(aiResponse.nodes, roadmapDoc._id as mongoose.Types.ObjectId);
 
+      emitProgress(userSocketId, "finalizing", 90, "Finalizing roadmap...");
+
       // Update the roadmap with the generated date
       roadmapDoc.lastUpdated = new Date();
       roadmapDoc.updatedBy = userId;
       await roadmapDoc.save();
-
-      // Emit finalizing progress
-      emitProgress(userSocketId, "finalizing", 95);
 
       // Populate the returned document with nodes and resources
       const populatedRoadmap = await Roadmap.findById(roadmapDoc._id)
@@ -458,7 +510,7 @@ Return your response as a JSON object with this exact structure:
         .populate("updatedBy", "username avatar")
         .lean();
 
-      // Manually fetch and populate nodes with their resources
+      // Fetch nodes with hierarchy
       const nodes = await RoadmapNode.find({ roadmap: roadmapDoc._id })
         .populate("resources", "title url resourceType description")
         .populate("prerequisites", "title depth position")
@@ -466,18 +518,35 @@ Return your response as a JSON object with this exact structure:
         .sort({ depth: 1, position: 1 })
         .lean();
 
-      // Emit complete progress
-      emitProgress(userSocketId, "complete", 100);
-
-      return {
-        ...populatedRoadmap,
-        nodes: nodes
+      // Build hierarchical structure
+      const buildHierarchy = (flatNodes: any[], depth = 0, parentId?: string): any[] => {
+        return flatNodes
+          .filter(n => n.depth === depth && 
+            (depth === 0 || n.prerequisites?.some((p: any) => p._id?.toString() === parentId)))
+          .map(n => ({
+            ...n,
+            children: buildHierarchy(flatNodes, depth + 1, n._id.toString())
+          }));
       };
+
+      const hierarchicalNodes = buildHierarchy(nodes);
+
+      // Cache the result
+      const result = {
+        ...populatedRoadmap,
+        nodes: hierarchicalNodes,
+        flatNodes: nodes
+      };
+      
+      setCachedRoadmap(userPrompt, result);
+      
+      emitProgress(userSocketId, "complete", 100, "Roadmap ready!");
+
+      return result;
     } catch (error: any) {
       // Cleanup if something went wrong
       try {
         await RoadmapNode.deleteMany({ roadmap: roadmapDoc._id });
-        await Resource.deleteMany({ contributor: userId, isApproved: false });
         await Roadmap.findByIdAndDelete(roadmapDoc._id);
       } catch (cleanupError) {
         console.error("Error during cleanup:", cleanupError);
@@ -508,18 +577,20 @@ function validateNodes(nodes: RoadmapNodeInput[]): RoadmapNodeInput[] {
       node.difficulty = "beginner";
     }
 
-    // Validate resources
+    // Validate and clean resources
     if (node.resources) {
-      node.resources = node.resources.map(resource => ({
-        ...resource,
-        resourceType: validResourceTypes.includes(resource.resourceType.toLowerCase())
-          ? resource.resourceType.toLowerCase()
-          : "other"
-      }));
+      node.resources = node.resources
+        .filter(resource => resource && resource.title && resource.url) // Remove invalid resources
+        .map(resource => ({
+          ...resource,
+          resourceType: resource.resourceType && validResourceTypes.includes(resource.resourceType.toLowerCase())
+            ? resource.resourceType.toLowerCase()
+            : "other"
+        }));
     }
 
     // Validate children recursively
-    if (node.children) {
+    if (node.children && node.children.length > 0) {
       node.children = validateNodes(node.children);
     }
 

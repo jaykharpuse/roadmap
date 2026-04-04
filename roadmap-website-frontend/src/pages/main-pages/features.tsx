@@ -1,7 +1,10 @@
 import { motion } from "framer-motion";
 import { Network, FileText, Plus, BookOpen, TrendingUp } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 
 export default function FeaturesSection() {
+  const navigate = useNavigate();
+  
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -27,22 +30,32 @@ export default function FeaturesSection() {
     {
       title: "Get Roadmap For Developer, Marketers, Students, Business",
       icon: Network,
+      action: () => navigate("/roadmaps"),
+      description: "Browse curated learning paths",
     },
     {
       title: "Get Cheatsheets To Summarise Your Learning",
       icon: FileText,
+      action: () => navigate("/roadmaps"),
+      description: "Quick reference guides",
     },
     {
       title: "Couldn't Find any roadmap on your topic? Create custom Roadmaps",
       icon: Plus,
+      action: () => navigate("/generate-roadmap"),
+      description: "AI-powered roadmap creation",
     },
     {
       title: "Get Free Resources to learn the concepts listed in the roadmap",
       icon: BookOpen,
+      action: () => navigate("/roadmaps"),
+      description: "Quality learning resources",
     },
     {
       title: "Get Roadmap of all trending technologies",
       icon: TrendingUp,
+      action: () => navigate("/roadmaps"),
+      description: "Stay up to date with tech trends",
     },
   ];
 
@@ -73,6 +86,8 @@ export default function FeaturesSection() {
               className="bg-white/5 backdrop-blur-md h-[420px] rounded-2xl p-6 border border-white/10 hover:border-blue-400 transition-all duration-300 group cursor-pointer shadow-md hover:shadow-blue-500/10"
               variants={cardVariants}
               whileHover={{ scale: 1.015 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={feature.action}
             >
               <div className="flex flex-col h-full">
                 <div className="mb-5">
@@ -84,10 +99,12 @@ export default function FeaturesSection() {
                 <h3 className="text-xl font-semibold text-white leading-snug group-hover:text-blue-300 transition-colors duration-300">
                   {feature.title}
                 </h3>
+                
+                <p className="text-gray-400 text-sm mt-2">{feature.description}</p>
 
                 <div className="mt-auto flex items-center justify-center pt-6">
                   <motion.div
-                    className="w-full h-28 bg-white/5 rounded-xl flex items-center justify-center relative overflow-hidden"
+                    className="w-full h-28 bg-white/5 rounded-xl flex items-center justify-center relative overflow-hidden group-hover:bg-blue-500/10 transition-colors"
                     whileHover={{ scale: 1.03 }}
                     transition={{ duration: 0.4 }}
                   >
@@ -105,6 +122,9 @@ export default function FeaturesSection() {
                     >
                       <feature.icon className="w-8 h-8 text-white" />
                     </motion.div>
+                    <span className="absolute bottom-2 text-xs text-blue-400 group-hover:text-blue-300">
+                      Click to explore →
+                    </span>
                   </motion.div>
                 </div>
               </div>

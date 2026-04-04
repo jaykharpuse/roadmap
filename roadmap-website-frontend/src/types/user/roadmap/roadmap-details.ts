@@ -55,7 +55,8 @@ export interface Resource {
   _id: string;
   title: string;
   url: string;
-  type: ResourceType;
+  type?: ResourceType;
+  resourceType?: string; // Backend uses resourceType
   description?: string;
 }
 

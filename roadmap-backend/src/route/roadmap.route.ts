@@ -13,7 +13,9 @@ import {
     generateRoadmapWithAi,
     upvoteRoadmap,
     downvoteRoadmap,
-    regenerateRoadmap, 
+    regenerateRoadmap,
+    getTrendingRoadmaps,
+    seedSampleRoadmaps, 
      } 
      from "../controller/roadmap.controller";
 
@@ -23,6 +25,8 @@ import { authorization, isAuthenticated }
 const RoadmapRouter = Router();
 
 RoadmapRouter.get('/', getRoadmapsPaginated); 
+RoadmapRouter.get('/trending', getTrendingRoadmaps);
+RoadmapRouter.post('/seed', seedSampleRoadmaps);
 RoadmapRouter.post("/generate", isAuthenticated , generateRoadmapWithAi);
 RoadmapRouter.get('/:idOrSlug', getRoadmapDetails); 
 RoadmapRouter.get('/:roadmapId/reviews', getRoadmapReviews); 

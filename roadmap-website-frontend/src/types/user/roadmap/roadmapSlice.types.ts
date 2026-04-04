@@ -8,6 +8,7 @@ export interface IPaginationMeta {
 export interface roadmapState{
     isLoading : boolean;
     roadmaps:IRoadmap[];
+    trendingRoadmaps:IRoadmap[];
     roadmap:RoadmapDetailsResponse | null;
     paginationMeta : IPaginationMeta | null;
     error: string | null;

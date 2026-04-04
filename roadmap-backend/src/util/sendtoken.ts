@@ -6,11 +6,12 @@ const sendtoken = (
   statuscode: number,
   user: User
 ) => {
+  const isProduction = process.env.NODE_ENV === "production";
   const options = {
     expires: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
-    httpOnly: false,
-    sameSite: "lax" as const,  // Changed from "none" to "lax" for development
-    secure: false,  // Set to false for localhost development
+    httpOnly: true,
+    sameSite: (isProduction ? "none" : "lax") as "none" | "lax",
+    secure: isProduction,
   };
   res
     .cookie("token", token, options)

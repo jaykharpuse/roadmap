@@ -270,12 +270,13 @@ export const Login = catchAsync(async (req, res, next) => {
 });
 export const Logout = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
+    const isProduction = process.env.NODE_ENV === "production";
     res
       .cookie("token", null, {
         expires: new Date(Date.now()),
-        httpOnly: false,
-        sameSite: "lax" as const,
-        secure: false,
+        httpOnly: true,
+        sameSite: (isProduction ? "none" : "lax") as "none" | "lax",
+        secure: isProduction,
       })
       .status(200)
       .json({
@@ -294,7 +295,8 @@ export const forgotPassword = catchAsync(
       }
       user.ResetToken();
       await user.save();
-      const resetUrl = `http://localhost:5173/reset-password/${user.ResetPasswordToken}`;
+      const frontendBaseUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+      const resetUrl = `${frontendBaseUrl.replace(/\/$/, "")}/reset-password/${user.ResetPasswordToken}`;
       const mailresponse = await sendResetPasswordMail(resetUrl, email);
       if (!mailresponse.success) {
         return next(new Errorhandler(403, mailresponse.message));

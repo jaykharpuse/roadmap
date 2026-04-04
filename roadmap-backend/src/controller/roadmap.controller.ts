@@ -86,9 +86,9 @@ export const generateRoadmapWithAi = async (
     // Get socketId from user's socket mapping or fallback
     const socketId = req.user?._id ? userSocketMap.get(req.user._id.toString()) : undefined;
 
-    // Set a timeout for the entire operation
+    // Set a timeout for the entire operation (60 seconds - fast generation)
     const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error("Roadmap generation timeout - please try again")), 120000); // 2 min timeout
+      setTimeout(() => reject(new Error("Roadmap generation timeout - please try again")), 60000); // 1 min timeout
     });
 
     const generationPromise = generateRoadmap({
@@ -706,6 +706,119 @@ export const regenerateRoadmap = async (
       success: true,
       message: "Roadmap regenerated successfully",
       roadmap: oldRoadmap,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// Get trending roadmaps (most viewed/upvoted)
+export const getTrendingRoadmaps = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const limit = parseInt(req.query.limit as string) || 10;
+    
+    // Get roadmaps sorted by views and upvotes
+    const roadmaps = await Roadmap.find({ isPublished: true })
+      .sort({ 'stats.views': -1, createdAt: -1 })
+      .limit(limit)
+      .populate("contributor", "username avatar")
+      .select("title description category difficulty tags stats coverImage slug createdAt");
+    
+    res.status(200).json({
+      success: true,
+      roadmaps,
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
+// Seed sample roadmaps for new users
+export const seedSampleRoadmaps = async (
+  req: reqwithuser,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    // Check if sample roadmaps already exist
+    const existingCount = await Roadmap.countDocuments({ isPublished: true });
+    if (existingCount > 0) {
+      return res.status(200).json({
+        success: true,
+        message: `Already have ${existingCount} roadmaps`,
+        count: existingCount,
+      });
+    }
+    
+    // Sample roadmaps to seed
+    const sampleRoadmaps = [
+      {
+        title: "Complete Web Development Roadmap 2024",
+        description: "Learn full-stack web development from scratch. Master HTML, CSS, JavaScript, React, Node.js and databases.",
+        category: "web-development",
+        difficulty: "beginner",
+        tags: ["web", "javascript", "react", "nodejs", "fullstack"],
+        isPublished: true,
+        publishedAt: new Date(),
+        isCommunityContributed: true,
+        stats: { views: 150 },
+      },
+      {
+        title: "Python for Data Science",
+        description: "Master Python for data analysis, machine learning and AI. Learn NumPy, Pandas, Scikit-learn and TensorFlow.",
+        category: "data-science",
+        difficulty: "intermediate",
+        tags: ["python", "data-science", "machine-learning", "ai"],
+        isPublished: true,
+        publishedAt: new Date(),
+        isCommunityContributed: true,
+        stats: { views: 120 },
+      },
+      {
+        title: "React.js Complete Guide",
+        description: "Build modern web applications with React. Learn hooks, state management, routing and best practices.",
+        category: "web-development",
+        difficulty: "intermediate",
+        tags: ["react", "javascript", "frontend", "web"],
+        isPublished: true,
+        publishedAt: new Date(),
+        isCommunityContributed: true,
+        stats: { views: 100 },
+      },
+      {
+        title: "DevOps and Cloud Computing",
+        description: "Learn Docker, Kubernetes, CI/CD, AWS, and modern DevOps practices for scalable deployments.",
+        category: "devops",
+        difficulty: "intermediate",
+        tags: ["devops", "docker", "kubernetes", "aws", "cloud"],
+        isPublished: true,
+        publishedAt: new Date(),
+        isCommunityContributed: true,
+        stats: { views: 90 },
+      },
+      {
+        title: "Mobile App Development with React Native",
+        description: "Build cross-platform mobile apps for iOS and Android using React Native and Expo.",
+        category: "mobile-development",
+        difficulty: "intermediate",
+        tags: ["react-native", "mobile", "ios", "android"],
+        isPublished: true,
+        publishedAt: new Date(),
+        isCommunityContributed: true,
+        stats: { views: 80 },
+      },
+    ];
+    
+    const created = await Roadmap.insertMany(sampleRoadmaps);
+    
+    res.status(201).json({
+      success: true,
+      message: `Created ${created.length} sample roadmaps`,
+      count: created.length,
     });
   } catch (err) {
     next(err);

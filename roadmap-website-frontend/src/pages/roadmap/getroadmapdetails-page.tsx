@@ -49,6 +49,9 @@ import {
   TrendingUp,
   BookmarkPlus,
   BookmarkMinus,
+  Share2,
+  Download,
+  Copy,
 } from "lucide-react"
 
 import { useParams, useNavigate, useLocation } from "react-router-dom"
@@ -243,7 +246,6 @@ const ProgressStatsCard = ({ stats }: { stats: IUserProgressStatsResponse }) => 
 const NodeCard = ({
   node,
   nodeProgress,
-
   depth = 0,
   roadmapId,
   isAuthenticated,
@@ -256,9 +258,13 @@ const NodeCard = ({
   isAuthenticated?: boolean
   navigate?: (path: string) => void
 }) => {
-  const [isExpanded, setIsExpanded] = useState(depth < 2)
+  const [isExpanded, setIsExpanded] = useState(depth < 1) // Auto-expand first level
+  const [isHovered, setIsHovered] = useState(false)
   const currentStatus = nodeProgress?.status || "not_started"
   const dispatch = useAppDispatch()
+  const hasChildren = node.children && node.children.length > 0
+  const hasResources = node.resources && node.resources.length > 0
+
   const handleProgressChange = (status: ProgressStatus) => {
     if (!isAuthenticated) {
       toast.error("Please login to track your progress")
@@ -268,53 +274,91 @@ const NodeCard = ({
     dispatch(updateUserProgress({ roadmapId: roadmapId ?? "", nodeId: node._id, status }))
       .unwrap()
       .then(() => {
-        toast.success("progress updated successfully")
+        toast.success("Progress updated!")
       })
       .catch(() => {
-        toast.error("failed to update progress")
+        toast.error("Failed to update progress")
       })
   }
 
-  return (
-    <div className={`ml-${depth * 4}`}>
-      <Card className="mb-4">
-        <CardContent className="p-4">
-          <div className="flex items-start justify-between">
-            <div className="flex-1">
-              <div className="flex items-center gap-3 mb-2">
-                <Progress
-                  value={currentStatus === "completed" ? 100 : currentStatus === "in_progress" ? 50 : 0}
-                  className="h-4 w-4"
-                />
+  const getStatusColor = () => {
+    switch (currentStatus) {
+      case "completed":
+        return "border-l-green-500 bg-green-500/5"
+      case "in_progress":
+        return "border-l-blue-500 bg-blue-500/5"
+      case "skipped":
+        return "border-l-yellow-500 bg-yellow-500/5"
+      default:
+        return "border-l-gray-500"
+    }
+  }
 
-                {node.children && node.children.length > 0 && (
-                  <Button variant="ghost" size="sm" onClick={() => setIsExpanded(!isExpanded)} className="p-1 h-6 w-6">
+  const handleNodeClick = () => {
+    if (hasChildren) {
+      setIsExpanded(!isExpanded)
+    }
+  }
+
+  return (
+    <div className={`ml-${Math.min(depth * 4, 16)}`}>
+      <Card 
+        className={`mb-3 border-l-4 transition-all duration-200 cursor-pointer hover:shadow-md ${getStatusColor()} ${isHovered ? 'ring-1 ring-primary/30' : ''}`}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+        onClick={handleNodeClick}
+      >
+        <CardContent className="p-4">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-2 flex-wrap">
+                {/* Expand/Collapse Button */}
+                {hasChildren && (
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={(e) => { e.stopPropagation(); setIsExpanded(!isExpanded); }} 
+                    className="p-1 h-7 w-7 rounded-full hover:bg-primary/10"
+                  >
                     {isExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                   </Button>
                 )}
 
-                <h3 className="text-lg font-semibold text-foreground">{node.title}</h3>
+                {/* Status Indicator */}
+                <div className={`w-3 h-3 rounded-full ${
+                  currentStatus === "completed" ? "bg-green-500" : 
+                  currentStatus === "in_progress" ? "bg-blue-500 animate-pulse" : 
+                  "bg-gray-400"
+                }`} />
 
+                {/* Title */}
+                <h3 className="text-base font-semibold text-foreground truncate">{node.title}</h3>
+
+                {/* Badges */}
                 {node.nodeType && (
-                  <Badge variant="outline" className="capitalize text-xs">
+                  <Badge variant="outline" className="capitalize text-xs shrink-0">
                     {node.nodeType}
                   </Badge>
                 )}
 
                 {node.isOptional && (
-                  <Badge variant="secondary" className="text-xs">
+                  <Badge variant="secondary" className="text-xs shrink-0">
                     Optional
                   </Badge>
                 )}
               </div>
 
-              {node.description && <p className="text-muted-foreground mb-3 ml-8">{node.description}</p>}
+              {/* Description */}
+              {node.description && (
+                <p className="text-sm text-muted-foreground mb-3 ml-6 line-clamp-2">{node.description}</p>
+              )}
 
-              <div className="flex flex-wrap items-center gap-4 text-sm ml-8">
+              {/* Meta Info */}
+              <div className="flex flex-wrap items-center gap-3 text-sm ml-6">
                 {node.estimatedDuration && (
                   <div className="flex items-center gap-1 text-muted-foreground">
-                    <Clock className="h-4 w-4 text-primary" />
-                    {node.estimatedDuration.value} {node.estimatedDuration.unit}
+                    <Clock className="h-3.5 w-3.5 text-primary" />
+                    <span>{node.estimatedDuration.value} {node.estimatedDuration.unit}</span>
                   </div>
                 )}
 
@@ -324,67 +368,63 @@ const NodeCard = ({
                   </Badge>
                 )}
 
-                {node.metadata?.importance && (
+                {node.metadata?.importance && node.metadata.importance !== "medium" && (
                   <div className={`flex items-center gap-1 text-xs ${getImportanceColor(node.metadata.importance)}`}>
                     <AlertCircle className="h-3 w-3" />
-                    {node.metadata.importance} priority
+                    {node.metadata.importance}
                   </div>
+                )}
+
+                {hasChildren && (
+                  <span className="text-xs text-muted-foreground">
+                    {node.children?.length} subtopic{node.children?.length !== 1 ? 's' : ''}
+                  </span>
                 )}
               </div>
 
-              {node.resources && node.resources.length > 0 && (
-                <div className="mt-3 ml-8">
-                  <h4 className="text-sm font-medium text-foreground mb-2">Resources:</h4>
-                  <div className="space-y-1">
-                    {node.resources.map((resource) => (
-                      <div key={resource._id} className="flex items-center gap-2 text-sm">
-                        <span className="text-primary">{getResourceIcon(resource.type)}</span>
-                        <a
-                          href={resource.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-primary hover:text-primary/80 hover:underline"
-                        >
-                          {resource.title}
-                        </a>
-                      </div>
+              {/* Resources - Always show when available */}
+              {hasResources && (
+                <div className="mt-3 ml-6" onClick={(e) => e.stopPropagation()}>
+                  <h4 className="text-xs font-medium text-muted-foreground mb-2 flex items-center gap-1">
+                    <BookOpen className="h-3 w-3" /> Resources ({node.resources?.length})
+                  </h4>
+                  <div className="flex flex-wrap gap-2">
+                    {node.resources?.slice(0, 4).map((resource) => (
+                      <a
+                        key={resource._id}
+                        href={resource.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1.5 px-2 py-1 text-xs bg-primary/10 hover:bg-primary/20 text-primary rounded-md transition-colors"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {getResourceIcon(resource.type || resource.resourceType)}
+                        <span className="max-w-[150px] truncate">{resource.title}</span>
+                        <ExternalLink className="h-3 w-3 opacity-50" />
+                      </a>
                     ))}
-                  </div>
-                </div>
-              )}
-
-              {node.dependencies && node.dependencies.length > 0 && (
-                <div className="mt-3 ml-8">
-                  <h4 className="text-sm font-medium text-foreground mb-1">Dependencies:</h4>
-                  <div className="text-sm text-muted-foreground">
-                    {node.dependencies.map((dep, index) => (
-                      <span key={dep._id}>
-                        {index > 0 && ", "}
-                        <span className="text-primary">{dep.title}</span>
+                    {node.resources && node.resources.length > 4 && (
+                      <span className="text-xs text-muted-foreground self-center">
+                        +{node.resources.length - 4} more
                       </span>
-                    ))}
+                    )}
                   </div>
-                </div>
-              )}
-
-              {nodeProgress?.notes && (
-                <div className="mt-3 ml-8">
-                  <h4 className="text-sm font-medium text-foreground mb-1">Notes:</h4>
-                  <p className="text-sm text-muted-foreground">{nodeProgress.notes}</p>
                 </div>
               )}
             </div>
 
-            <div className="flex items-center gap-2 ml-4">
+            {/* Progress Selector */}
+            <div className="flex items-center gap-2 shrink-0" onClick={(e) => e.stopPropagation()}>
               <ProgressSelector currentStatus={currentStatus} onStatusChange={handleProgressChange} />
             </div>
           </div>
         </CardContent>
       </Card>
 
-      {isExpanded && node.children && (
-        <div className="ml-6">
-          {node.children.map((child) => (
+      {/* Children - Animated */}
+      {isExpanded && hasChildren && (
+        <div className="ml-4 pl-4 border-l-2 border-dashed border-muted-foreground/20 space-y-2 animate-in fade-in slide-in-from-top-2 duration-200">
+          {node.children?.map((child) => (
             <NodeCard
               key={child._id}
               node={child}
@@ -657,6 +697,63 @@ const handleAddBookmark = () => {
       });
   };
 
+  // Share roadmap handler
+  const handleShareRoadmap = async () => {
+    const roadmapTitle = RoadmapDetails?.title || RoadmapDetails?.roadmap?.title || "Roadmap";
+    const shareUrl = window.location.href;
+    const shareData = {
+      title: roadmapTitle,
+      text: `Check out this learning roadmap: ${roadmapTitle}`,
+      url: shareUrl,
+    };
+
+    try {
+      if (navigator.share) {
+        await navigator.share(shareData);
+        toast.success("Shared successfully!");
+      } else {
+        await navigator.clipboard.writeText(shareUrl);
+        toast.success("Link copied to clipboard!");
+      }
+    } catch (error) {
+      // User cancelled or share failed
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        toast.success("Link copied to clipboard!");
+      } catch {
+        toast.error("Failed to share");
+      }
+    }
+  };
+
+  // Download roadmap as JSON
+  const handleDownloadRoadmap = () => {
+    if (!RoadmapDetails) {
+      toast.error("No roadmap data available");
+      return;
+    }
+
+    const roadmapData = {
+      title: RoadmapDetails.title || RoadmapDetails.roadmap?.title,
+      description: RoadmapDetails.description || RoadmapDetails.roadmap?.description,
+      category: RoadmapDetails.category || RoadmapDetails.roadmap?.category,
+      difficulty: RoadmapDetails.difficulty || RoadmapDetails.roadmap?.difficulty,
+      nodes: RoadmapDetails.nodes || [],
+      exportedAt: new Date().toISOString(),
+    };
+
+    const blob = new Blob([JSON.stringify(roadmapData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${(roadmapData.title || 'roadmap').replace(/\s+/g, '-').toLowerCase()}.json`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast.success("Roadmap downloaded!");
+  };
+
   // 👉 Now conditionally render after all hooks
   if (!RoadmapDetails) {
     return <p>Loading roadmap...</p>
@@ -755,8 +852,22 @@ const handleAddBookmark = () => {
                   </Button>
                 )}
 
-                <Button variant="outline" className="w-full bg-transparent">
+                <Button 
+                  variant="outline" 
+                  className="w-full bg-transparent hover:bg-primary/10"
+                  onClick={handleShareRoadmap}
+                >
+                  <Share2 className="mr-2 h-4 w-4" />
                   Share Roadmap
+                </Button>
+
+                <Button 
+                  variant="outline" 
+                  className="w-full bg-transparent hover:bg-primary/10"
+                  onClick={handleDownloadRoadmap}
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  Download Roadmap
                 </Button>
               </CardContent>
             </Card>

@@ -2,7 +2,7 @@
 import type React from "react"
 import { useEffect, useState, useMemo } from "react"
 import { useAppDispatch, useAppSelector } from "@/hooks/useAppDispatch"
-import { getRoadmaps } from "@/state/slices/roadmapSlice"
+import { getRoadmaps, getTrendingRoadmaps, seedRoadmaps } from "@/state/slices/roadmapSlice"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -29,6 +29,8 @@ import {
   Cloud,
   Coins,
   MoreHorizontal,
+  TrendingUp,
+  Sparkles,
 } from "lucide-react"
 import { useNavigate, useLocation } from "react-router-dom"
 import type { IRoadmap } from "@/types/user/roadmap/roadmap.types"
@@ -38,14 +40,19 @@ import type { IRoadmap } from "@/types/user/roadmap/roadmap.types"
 const categoryIcons = {
   frontend: Code,
   backend: Server,
+  "web-development": Code,
   devops: Cloud,
   mobile: Smartphone,
+  "mobile-development": Smartphone,
   "data-science": Database,
   design: Palette,
   "product-management": BarChart3,
   cybersecurity: Shield,
   cloud: Cloud,
   blockchain: Coins,
+  ai: Database,
+  "machine-learning": Database,
+  programming: Code,
   other: MoreHorizontal,
 }
 
@@ -124,8 +131,9 @@ const Roadmaps: React.FunctionComponent = () => {
   const [selectedCategory, setSelectedCategory] = useState<string>("all")
   const [selectedDifficulty, setSelectedDifficulty] = useState<string>("all")
   const [sortBy, setSortBy] = useState<string>("newest")
+  const [seeded, setSeeded] = useState(false)
 
-  const { roadmaps, isLoading, paginationMeta } = useAppSelector((state) => state.roadmap)
+  const { roadmaps, trendingRoadmaps, isLoading, paginationMeta } = useAppSelector((state) => state.roadmap)
 
   const location = useLocation();
 
@@ -141,7 +149,10 @@ const Roadmaps: React.FunctionComponent = () => {
 
   // Filter and sort roadmaps
   const filteredAndSortedRoadmaps = useMemo(() => {
-    const filtered = roadmaps.filter((roadmap: IRoadmap) => {
+    // Use roadmaps if available, else use trending
+    const source = roadmaps.length > 0 ? roadmaps : trendingRoadmaps;
+    
+    const filtered = source.filter((roadmap: IRoadmap) => {
       const matchesSearch =
         roadmap.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         roadmap.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -172,18 +183,32 @@ const Roadmaps: React.FunctionComponent = () => {
     }
 
     return filtered
-  }, [roadmaps, searchTerm, selectedCategory, selectedDifficulty, sortBy])
+  }, [roadmaps, trendingRoadmaps, searchTerm, selectedCategory, selectedDifficulty, sortBy])
 
   useEffect(() => {
     document.title = "Roadmaps"
+    
+    // Fetch roadmaps
     dispatch(getRoadmaps(page))
       .unwrap()
-      .then(() => {
-        // Success
+      .then((data) => {
+        // If no roadmaps, try to seed and fetch trending
+        if ((!data?.roadmaps || data.roadmaps.length === 0) && !seeded) {
+          setSeeded(true);
+          dispatch(seedRoadmaps()).then(() => {
+            dispatch(getTrendingRoadmaps());
+            dispatch(getRoadmaps(1)); // Refetch after seed
+          });
+        }
       })
       .catch((error) => {
         console.error("Failed to fetch roadmaps:", error)
+        // Try trending as fallback
+        dispatch(getTrendingRoadmaps());
       })
+      
+    // Also fetch trending
+    dispatch(getTrendingRoadmaps());
   }, [dispatch, page])
 
   const handlePreviousPage = () => {
@@ -240,15 +265,18 @@ const Roadmaps: React.FunctionComponent = () => {
                 </SelectTrigger>
                 <SelectContent className="bg-slate-800 border-slate-700">
                   <SelectItem value="all">All Categories</SelectItem>
+                  <SelectItem value="web-development">Web Development</SelectItem>
                   <SelectItem value="frontend">Frontend</SelectItem>
                   <SelectItem value="backend">Backend</SelectItem>
-                  <SelectItem value="devops">DevOps</SelectItem>
-                  <SelectItem value="mobile">Mobile</SelectItem>
+                  <SelectItem value="mobile-development">Mobile Development</SelectItem>
                   <SelectItem value="data-science">Data Science</SelectItem>
-                  <SelectItem value="design">Design</SelectItem>
-                  <SelectItem value="product-management">Product Management</SelectItem>
-                  <SelectItem value="cybersecurity">Cybersecurity</SelectItem>
+                  <SelectItem value="ai">AI</SelectItem>
+                  <SelectItem value="machine-learning">Machine Learning</SelectItem>
+                  <SelectItem value="devops">DevOps</SelectItem>
                   <SelectItem value="cloud">Cloud</SelectItem>
+                  <SelectItem value="programming">Programming</SelectItem>
+                  <SelectItem value="cybersecurity">Cybersecurity</SelectItem>
+                  <SelectItem value="design">Design</SelectItem>
                   <SelectItem value="blockchain">Blockchain</SelectItem>
                   <SelectItem value="other">Other</SelectItem>
                 </SelectContent>
@@ -388,9 +416,16 @@ const Roadmaps: React.FunctionComponent = () => {
             {/* Empty State */}
             {filteredAndSortedRoadmaps.length === 0 && (
               <div className="text-center py-16">
-                <BookOpen className="w-16 h-16 text-slate-600 mx-auto mb-4" />
+                <Sparkles className="w-16 h-16 text-blue-500 mx-auto mb-4" />
                 <h3 className="text-xl font-semibold text-slate-300 mb-2">No roadmaps found</h3>
-                <p className="text-slate-400">Try adjusting your search or filter criteria</p>
+                <p className="text-slate-400 mb-6">Be the first to create an AI-powered roadmap!</p>
+                <Button 
+                  onClick={() => navigate('/generate-roadmap')}
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                >
+                  <Sparkles className="w-4 h-4 mr-2" />
+                  Generate Roadmap
+                </Button>
               </div>
             )}
 
