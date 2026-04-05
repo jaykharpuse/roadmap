@@ -762,6 +762,9 @@ export default function RoadmapDetailsPage() {
     }
   }, [roadmapId])
 
+  // Keep memoized progress map and accessor as hooks at top-level
+  
+
   const startProgress = () => {
     if (!roadmapId) return
 
