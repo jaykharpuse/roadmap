@@ -5,7 +5,6 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Progress } from "@/components/ui/progress"
 import {
   Dialog,
   DialogContent,
@@ -548,7 +547,7 @@ const NodeCard = ({
                         className="inline-flex items-center gap-1.5 px-2 py-1 text-xs bg-primary/10 hover:bg-primary/20 text-primary rounded-md transition-colors"
                         onClick={(e) => e.stopPropagation()}
                       >
-                        {getResourceIcon(resource.type || resource.resourceType)}
+                        {getResourceIcon(resource.type || resource.resourceType || "other")}
                         <span className="max-w-[150px] truncate">{resource.title}</span>
                         <ExternalLink className="h-3 w-3 opacity-50" />
                       </a>
@@ -852,7 +851,9 @@ const handleAddBookmark = () => {
 
   // Share roadmap handler
   const handleShareRoadmap = async () => {
-    const roadmapTitle = RoadmapDetails?.title || RoadmapDetails?.roadmap?.title || "Roadmap";
+    const roadmapTitle =
+      (RoadmapDetails && "roadmap" in RoadmapDetails ? RoadmapDetails.roadmap?.title : RoadmapDetails?.title) ||
+      "Roadmap";
     const shareUrl = window.location.href;
     const shareData = {
       title: roadmapTitle,
@@ -1082,7 +1083,8 @@ const handleAddBookmark = () => {
 
   // Handle both structures: direct roadmap or nested { roadmap, nodes }
   const nodes = RoadmapDetails.nodes || []
-  const roadmap = RoadmapDetails.roadmap || RoadmapDetails
+  const roadmap =
+    RoadmapDetails && "roadmap" in RoadmapDetails ? RoadmapDetails.roadmap : RoadmapDetails
 
   // Validate we have minimum required data
   if (!roadmap?._id && !roadmap?.title) {
@@ -1173,7 +1175,7 @@ const handleAddBookmark = () => {
             <Card>
               <CardContent className="p-6 space-y-3">
                 <Button className="w-full" onClick={startProgress} disabled={isLoading}>
-                  {userProgress?.stats?.completedNodes > 0 ? "Continue Learning" : "Start Learning"}
+                  {(userProgress?.stats?.completedNodes ?? 0) > 0 ? "Continue Learning" : "Start Learning"}
                 </Button>
 
                 {!isBookmarked ? (

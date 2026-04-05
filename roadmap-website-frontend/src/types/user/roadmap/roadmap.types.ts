@@ -1,3 +1,5 @@
+import type { RoadmapNode } from "./roadmap-details";
+
 type RoadmapCategory =
   | "frontend"
   | "backend"
@@ -55,4 +57,7 @@ export interface IRoadmap {
   // added by `{ timestamps: true }`
   createdAt: string;
   updatedAt: string;
+
+  // Optional nodes for generated roadmaps or details payloads
+  nodes?: RoadmapNode[];
 }

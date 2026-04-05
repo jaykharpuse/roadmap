@@ -41,6 +41,8 @@ export interface IUserProgressStatsResponse {
   completionPercentage: number;
   totalResources: number;
   completedResources: number;
+  inProgressNodes?: number;
+  skippedNodes?: number;
 }
 
 export interface IUserProgressResponse {

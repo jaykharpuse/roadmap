@@ -18,7 +18,6 @@ import {
   Star,
   Users,
   Eye,
-  BookOpen,
   Code,
   Server,
   Smartphone,
@@ -29,7 +28,6 @@ import {
   Cloud,
   Coins,
   MoreHorizontal,
-  TrendingUp,
   Sparkles,
 } from "lucide-react"
 import { useNavigate, useLocation } from "react-router-dom"
