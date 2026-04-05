@@ -1,6 +1,6 @@
 
 import type React from "react"
-import { useEffect, useState, useCallback } from "react"
+import { useEffect, useState, useCallback, useMemo } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -86,6 +86,13 @@ const GenerateRoadmap: React.FC = () => {
   const [currentStep, setCurrentStep] = useState<number>(0)
   const [generationTimeout, setGenerationTimeout] = useState(false)
   const [isRetrying, setIsRetrying] = useState(false)
+
+  const generatedNodes = useMemo(() => {
+    if (!generatedRoadmap || typeof generatedRoadmap !== "object") return []
+    if (!("nodes" in generatedRoadmap)) return []
+    const nodes = (generatedRoadmap as { nodes?: unknown }).nodes
+    return Array.isArray(nodes) ? nodes : []
+  }, [generatedRoadmap])
 
   // Setup socket listeners
   useEffect(() => {
@@ -308,7 +315,7 @@ const GenerateRoadmap: React.FC = () => {
       category: generatedRoadmap.category,
       difficulty: generatedRoadmap.difficulty,
       estimatedDuration: generatedRoadmap.estimatedDuration,
-      nodes: generatedRoadmap.nodes || [],
+      nodes: generatedNodes,
       exportedAt: new Date().toISOString(),
     }
 
@@ -652,14 +659,14 @@ const GenerateRoadmap: React.FC = () => {
                     )}
 
                     {/* Learning Path Preview */}
-                    {generatedRoadmap.nodes && generatedRoadmap.nodes.length > 0 && (
+                    {generatedNodes.length > 0 && (
                       <div className="space-y-3 pt-4 border-t border-[#374151]">
                         <h4 className="text-[#60A5FA] font-semibold flex items-center gap-2">
                           <Target className="w-4 h-4" />
-                          Learning Path ({generatedRoadmap.nodes.length} sections)
+                          Learning Path ({generatedNodes.length} sections)
                         </h4>
                         <div className="space-y-2 max-h-64 overflow-y-auto pr-2">
-                          {generatedRoadmap.nodes.map((node: any, index: number) => (
+                          {generatedNodes.map((node: any, index: number) => (
                             <div 
                               key={node._id || index} 
                               className="flex items-start gap-3 p-3 bg-[#0F172A] rounded-lg hover:bg-[#1E293B] transition-colors"
@@ -694,14 +701,14 @@ const GenerateRoadmap: React.FC = () => {
                     )}
 
                     {/* Resources Preview */}
-                    {generatedRoadmap.nodes?.some((node: any) => node.resources?.length > 0) && (
+                    {generatedNodes.some((node: any) => node.resources?.length > 0) && (
                       <div className="space-y-3 pt-4 border-t border-[#374151]">
                         <h4 className="text-[#60A5FA] font-semibold flex items-center gap-2">
                           <BookOpen className="w-4 h-4" />
                           Resources Preview
                         </h4>
                         <div className="space-y-3">
-                          {generatedRoadmap.nodes
+                          {generatedNodes
                             .filter((node: any) => node.resources?.length > 0)
                             .slice(0, 3)
                             .map((node: any, index: number) => (

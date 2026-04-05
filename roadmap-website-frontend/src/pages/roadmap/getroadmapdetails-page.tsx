@@ -250,8 +250,10 @@ const ProgressStatsCard = ({ stats }: { stats: IUserProgressStatsResponse | null
   const completedResources = stats.completedResources ?? 0
   const totalResources = stats.totalResources ?? 0
   const completionPercentage = stats.completionPercentage ?? 0
-  const inProgressNodes = stats.inProgressNodes ?? 0
-  const skippedNodes = stats.skippedNodes ?? 0
+  const inProgressNodes =
+    ("inProgressNodes" in stats ? (stats as { inProgressNodes?: number }).inProgressNodes : 0) ?? 0
+  const skippedNodes =
+    ("skippedNodes" in stats ? (stats as { skippedNodes?: number }).skippedNodes : 0) ?? 0
 
   // Calculate progress circle values
   const radius = 40
@@ -541,7 +543,7 @@ const NodeCard = ({
                     {node.resources?.slice(0, 4).map((resource) => (
                       <a
                         key={resource._id}
-                        href={normalizeResourceUrl(resource.url)}
+                        href={normalizeResourceUrl(resource.url || "")}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-1.5 px-2 py-1 text-xs bg-primary/10 hover:bg-primary/20 text-primary rounded-md transition-colors"
