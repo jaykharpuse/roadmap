@@ -613,7 +613,7 @@ const GenerateRoadmap: React.FC = () => {
                           <div className="bg-[#0F172A] p-4 rounded-lg text-center">
                             <Eye className="w-6 h-6 text-[#3B82F6] mx-auto mb-2" />
                             <div className="text-[#60A5FA] font-semibold">
-                              {generatedRoadmap.stats.views.toLocaleString()}
+                              {generatedRoadmap.stats?.views?.toLocaleString() || "0"}
                             </div>
                             <div className="text-[#9CA3AF] text-sm">Views</div>
                           </div>
@@ -621,7 +621,7 @@ const GenerateRoadmap: React.FC = () => {
                           <div className="bg-[#0F172A] p-4 rounded-lg text-center">
                             <Users className="w-6 h-6 text-[#3B82F6] mx-auto mb-2" />
                             <div className="text-[#60A5FA] font-semibold">
-                              {generatedRoadmap.stats.completions.toLocaleString()}
+                              {generatedRoadmap.stats?.completions?.toLocaleString() || "0"}
                             </div>
                             <div className="text-[#9CA3AF] text-sm">Completions</div>
                           </div>
@@ -629,7 +629,7 @@ const GenerateRoadmap: React.FC = () => {
                           <div className="bg-[#0F172A] p-4 rounded-lg text-center">
                             <Star className="w-6 h-6 text-[#3B82F6] mx-auto mb-2" />
                             <div className="text-[#60A5FA] font-semibold">
-                              {generatedRoadmap.stats.averageRating.toFixed(1)}
+                              {generatedRoadmap.stats?.averageRating?.toFixed(1) || "0.0"}
                             </div>
                             <div className="text-[#9CA3AF] text-sm">Rating</div>
                           </div>
@@ -748,7 +748,7 @@ const GenerateRoadmap: React.FC = () => {
                           <User className="w-5 h-5 text-white" />
                         </div>
                         <div>
-                          <div className="text-[#E2E8F0] font-medium">{generatedRoadmap.contributor.username}</div>
+                          <div className="text-[#E2E8F0] font-medium">{generatedRoadmap.contributor?.username || "Unknown"}</div>
                           <div className="text-[#9CA3AF] text-sm">Contributor</div>
                         </div>
                       </div>
@@ -759,7 +759,7 @@ const GenerateRoadmap: React.FC = () => {
                       {generatedRoadmap.publishedAt && (
                         <div className="flex items-center gap-1">
                           <Calendar className="w-4 h-4" />
-                          Published: {new Date(generatedRoadmap.publishedAt).toLocaleDateString()}
+                          Published: {generatedRoadmap.publishedAt && !isNaN(new Date(generatedRoadmap.publishedAt).getTime()) ? new Date(generatedRoadmap.publishedAt).toLocaleDateString() : "N/A"}
                         </div>
                       )}
                       {generatedRoadmap.version && (

@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -28,6 +28,7 @@ import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
 import { Switch } from "@/components/ui/switch"
+import jsPDF from "jspdf"
 
 import {
   Star,
@@ -51,7 +52,9 @@ import {
   BookmarkMinus,
   Share2,
   Download,
-  Copy,
+  CheckCircle2,
+  Circle,
+  FileDown,
 } from "lucide-react"
 
 import { useParams, useNavigate, useLocation } from "react-router-dom"
@@ -132,120 +135,266 @@ const getResourceIcon = (type: string) => {
   }
 }
 
+const getSafeInitial = (value?: string) => {
+  if (!value || typeof value !== "string" || value.trim().length === 0) return "U"
+  return value.trim().charAt(0).toUpperCase()
+}
+
+const formatSafeDate = (value?: string | Date) => {
+  if (!value) return "N/A"
+  const date = new Date(value)
+  return Number.isNaN(date.getTime()) ? "N/A" : date.toLocaleDateString()
+}
+
+const formatDurationLabel = (
+  duration?: { value?: number; unit?: string } | null,
+  fallbackText = "Self-paced",
+) => {
+  if (!duration || duration.value === undefined || duration.value === null) return fallbackText
+  return `${duration.value} ${duration.unit || "weeks"}`
+}
+
+const normalizeResourceUrl = (url?: string) => {
+  if (!url || typeof url !== "string") return "#"
+  const trimmed = url.trim()
+  if (!trimmed) return "#"
+  if (/^https?:\/\//i.test(trimmed)) return trimmed
+  if (/^[\w.-]+\.[a-z]{2,}(\/.*)?$/i.test(trimmed)) return `https://${trimmed}`
+  return "#"
+}
+
 // Components
-const RoadmapHeader = ({ roadmap }: { roadmap: RoadmapDetails }) => (
-  <div className="relative">
-    <div className="h-64 bg-gradient-to-r from-blue-900 to-purple-900 rounded-lg overflow-hidden">
-      {roadmap.coverImage && (
-        <img
-          src={roadmap.coverImage.url || "/placeholder.svg"}
-          alt={roadmap.title}
-          className="w-full h-full object-cover opacity-30"
-        />
-      )}
-      <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
-    </div>
-
-    <div className="absolute bottom-6 left-6 right-6">
-      <div className="flex items-center gap-2 mb-3">
-        <Badge variant="secondary" className="capitalize">
-          {roadmap.category}
-        </Badge>
-        {roadmap.isFeatured && (
-          <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30">Featured</Badge>
+const RoadmapHeader = ({ roadmap }: { roadmap: RoadmapDetails | null }) => {
+  if (!roadmap) return null
+  return (
+    <div className="relative">
+      <div className="h-64 bg-gradient-to-r from-blue-900 to-purple-900 rounded-lg overflow-hidden">
+        {roadmap.coverImage && (
+          <img
+            src={roadmap.coverImage.url || ""}
+            alt={roadmap.title || "Roadmap"}
+            className="w-full h-full object-cover opacity-30"
+          />
         )}
-        <Badge className={`border ${getDifficultyColor(roadmap.difficulty)} capitalize`}>{roadmap.difficulty}</Badge>
+        <div className="absolute inset-0 bg-gradient-to-t from-background via-transparent to-transparent" />
       </div>
 
-      <h1 className="text-4xl font-bold text-foreground mb-2">{roadmap.title}</h1>
-      <p className="text-muted-foreground text-lg max-w-3xl">{roadmap.description}</p>
+      <div className="absolute bottom-6 left-6 right-6">
+        <div className="flex items-center gap-2 mb-3">
+          {roadmap.category && (
+            <Badge variant="secondary" className="capitalize">
+              {roadmap.category}
+            </Badge>
+          )}
+          {roadmap.isFeatured && (
+            <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30">Featured</Badge>
+          )}
+          {roadmap.difficulty && (
+            <Badge className={`border ${getDifficultyColor(roadmap.difficulty)} capitalize`}>{roadmap.difficulty}</Badge>
+          )}
+        </div>
+
+        <h1 className="text-4xl font-bold text-foreground mb-2">{roadmap.title || "Untitled Roadmap"}</h1>
+        <p className="text-muted-foreground text-lg max-w-3xl">{roadmap.description || ""}</p>
+      </div>
     </div>
-  </div>
-)
+  )
+}
 
-const StatsCard = ({ stats }: { stats: RoadmapStats }) => (
-  <Card>
-    <CardContent className="p-6">
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
-        <div className="text-center">
-          <div className="flex items-center justify-center mb-2">
-            <Eye className="h-5 w-5 text-primary" />
+const StatsCard = ({ stats }: { stats: RoadmapStats | null | undefined }) => {
+  if (!stats) return null
+  return (
+    <Card>
+      <CardContent className="p-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+          <div className="text-center">
+            <div className="flex items-center justify-center mb-2">
+              <Eye className="h-5 w-5 text-primary" />
+            </div>
+            <div className="text-2xl font-bold text-foreground">{(stats.views ?? 0).toLocaleString()}</div>
+            <div className="text-sm text-muted-foreground">Views</div>
           </div>
-          <div className="text-2xl font-bold text-foreground">{stats.views.toLocaleString()}</div>
-          <div className="text-sm text-muted-foreground">Views</div>
-        </div>
 
-        <div className="text-center">
-          <div className="flex items-center justify-center mb-2">
-            <Trophy className="h-5 w-5 text-primary" />
+          <div className="text-center">
+            <div className="flex items-center justify-center mb-2">
+              <Trophy className="h-5 w-5 text-primary" />
+            </div>
+            <div className="text-2xl font-bold text-foreground">{(stats.completions ?? 0).toLocaleString()}</div>
+            <div className="text-sm text-muted-foreground">Completions</div>
           </div>
-          <div className="text-2xl font-bold text-foreground">{stats.completions.toLocaleString()}</div>
-          <div className="text-sm text-muted-foreground">Completions</div>
-        </div>
 
-        <div className="text-center">
-          <div className="flex items-center justify-center mb-2">
-            <Star className="h-5 w-5 text-primary" />
+          <div className="text-center">
+            <div className="flex items-center justify-center mb-2">
+              <Star className="h-5 w-5 text-primary" />
+            </div>
+            <div className="text-2xl font-bold text-foreground">{(stats.averageRating ?? 0).toFixed(1)}</div>
+            <div className="text-sm text-muted-foreground">Rating</div>
           </div>
-          <div className="text-2xl font-bold text-foreground">{stats.averageRating.toFixed(1)}</div>
-          <div className="text-sm text-muted-foreground">Rating</div>
-        </div>
 
-        <div className="text-center">
-          <div className="flex items-center justify-center mb-2">
-            <Users className="h-5 w-5 text-primary" />
+          <div className="text-center">
+            <div className="flex items-center justify-center mb-2">
+              <Users className="h-5 w-5 text-primary" />
+            </div>
+            <div className="text-2xl font-bold text-foreground">{(stats.ratingsCount ?? 0).toLocaleString()}</div>
+            <div className="text-sm text-muted-foreground">Reviews</div>
           </div>
-          <div className="text-2xl font-bold text-foreground">{stats.ratingsCount?.toLocaleString()}</div>
-          <div className="text-sm text-muted-foreground">Reviews</div>
-        </div>
       </div>
     </CardContent>
   </Card>
-)
+  )
+}
 
-const ProgressStatsCard = ({ stats }: { stats: IUserProgressStatsResponse }) => (
-  <Card>
-    <CardHeader>
-      <CardTitle className="flex items-center gap-2">
-        <Target className="h-5 w-5 text-primary" />
-        Your Progress
-      </CardTitle>
-    </CardHeader>
-    <CardContent className="space-y-4">
-      <div className="space-y-2">
-        <div className="flex justify-between text-sm">
-          <span className="text-muted-foreground">Nodes Completed</span>
-          <span className="text-foreground font-medium">
-            {stats.completedNodes} of {stats.totalNodes}
-          </span>
-        </div>
-        <Progress value={stats.completionPercentage} className="h-2" />
-        <p className="text-sm text-muted-foreground">{stats.completionPercentage}% Complete</p>
-      </div>
+const ProgressStatsCard = ({ stats }: { stats: IUserProgressStatsResponse | null | undefined }) => {
+  if (!stats) return null
+  const completedNodes = stats.completedNodes ?? 0
+  const totalNodes = stats.totalNodes ?? 0
+  const completedResources = stats.completedResources ?? 0
+  const totalResources = stats.totalResources ?? 0
+  const completionPercentage = stats.completionPercentage ?? 0
+  const inProgressNodes = stats.inProgressNodes ?? 0
+  const skippedNodes = stats.skippedNodes ?? 0
 
-      <div className="space-y-2">
-        <div className="flex justify-between text-sm">
-          <span className="text-muted-foreground">Resources Completed</span>
-          <span className="text-foreground font-medium">
-            {stats.completedResources} of {stats.totalResources}
-          </span>
-        </div>
-        <Progress value={(stats.completedResources / stats.totalResources) * 100} className="h-2" />
-      </div>
+  // Calculate progress circle values
+  const radius = 40
+  const circumference = 2 * Math.PI * radius
+  const strokeDashoffset = circumference - (completionPercentage / 100) * circumference
 
-      <div className="pt-2 border-t border-border">
-        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-          <TrendingUp className="h-4 w-4" />
-          Keep up the great work!
+  return (
+    <Card className="overflow-hidden">
+      <CardHeader className="bg-gradient-to-r from-primary/10 to-primary/5 pb-4">
+        <CardTitle className="flex items-center gap-2">
+          <TrendingUp className="h-5 w-5 text-primary" />
+          Your Progress
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="pt-6 space-y-6">
+        {/* Circular Progress */}
+        <div className="flex justify-center">
+          <div className="relative w-28 h-28">
+            <svg className="w-28 h-28 transform -rotate-90" viewBox="0 0 100 100">
+              <circle
+                cx="50"
+                cy="50"
+                r={radius}
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="8"
+                className="text-muted/20"
+              />
+              <circle
+                cx="50"
+                cy="50"
+                r={radius}
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="8"
+                strokeLinecap="round"
+                className="text-primary transition-all duration-500"
+                style={{
+                  strokeDasharray: circumference,
+                  strokeDashoffset: strokeDashoffset,
+                }}
+              />
+            </svg>
+            <div className="absolute inset-0 flex flex-col items-center justify-center">
+              <span className="text-2xl font-bold text-foreground">{completionPercentage}%</span>
+              <span className="text-xs text-muted-foreground">Complete</span>
+            </div>
+          </div>
         </div>
-      </div>
-    </CardContent>
-  </Card>
-)
+
+        {/* Progress Bars */}
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground flex items-center gap-1.5">
+                <Target className="h-3.5 w-3.5" /> Topics Completed
+              </span>
+              <span className="text-foreground font-medium">
+                {completedNodes} / {totalNodes}
+              </span>
+            </div>
+            <div className="h-2.5 bg-muted/30 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-gradient-to-r from-green-500 to-green-400 rounded-full transition-all duration-500"
+                style={{ width: `${totalNodes > 0 ? (completedNodes / totalNodes) * 100 : 0}%` }}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex justify-between text-sm">
+              <span className="text-muted-foreground flex items-center gap-1.5">
+                <BookOpen className="h-3.5 w-3.5" /> Resources Completed
+              </span>
+              <span className="text-foreground font-medium">
+                {completedResources} / {totalResources}
+              </span>
+            </div>
+            <div className="h-2.5 bg-muted/30 rounded-full overflow-hidden">
+              <div 
+                className="h-full bg-gradient-to-r from-blue-500 to-blue-400 rounded-full transition-all duration-500"
+                style={{ width: `${totalResources > 0 ? (completedResources / totalResources) * 100 : 0}%` }}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-3 gap-2 pt-3 border-t border-border">
+          <div className="rounded-lg bg-green-500/10 border border-green-500/20 p-3 text-center">
+            <div className="flex justify-center mb-1">
+              <CheckCircle2 className="h-4 w-4 text-green-400" />
+            </div>
+            <p className="text-lg font-bold text-green-400">{completedNodes}</p>
+            <p className="text-xs text-muted-foreground">Done</p>
+          </div>
+          <div className="rounded-lg bg-blue-500/10 border border-blue-500/20 p-3 text-center">
+            <div className="flex justify-center mb-1">
+              <Clock className="h-4 w-4 text-blue-400" />
+            </div>
+            <p className="text-lg font-bold text-blue-400">{inProgressNodes}</p>
+            <p className="text-xs text-muted-foreground">In Progress</p>
+          </div>
+          <div className="rounded-lg bg-orange-500/10 border border-orange-500/20 p-3 text-center">
+            <div className="flex justify-center mb-1">
+              <Circle className="h-4 w-4 text-orange-400" />
+            </div>
+            <p className="text-lg font-bold text-orange-400">{totalNodes - completedNodes - inProgressNodes - skippedNodes}</p>
+            <p className="text-xs text-muted-foreground">Remaining</p>
+          </div>
+        </div>
+
+        {/* Motivational Message */}
+        <div className="text-center py-2 px-3 bg-primary/5 rounded-lg border border-primary/10">
+          {completionPercentage === 0 && (
+            <p className="text-sm text-muted-foreground">🚀 Ready to start your learning journey?</p>
+          )}
+          {completionPercentage > 0 && completionPercentage < 25 && (
+            <p className="text-sm text-muted-foreground">🌱 Great start! Keep going!</p>
+          )}
+          {completionPercentage >= 25 && completionPercentage < 50 && (
+            <p className="text-sm text-muted-foreground">💪 You're making solid progress!</p>
+          )}
+          {completionPercentage >= 50 && completionPercentage < 75 && (
+            <p className="text-sm text-muted-foreground">🔥 Halfway there! Amazing work!</p>
+          )}
+          {completionPercentage >= 75 && completionPercentage < 100 && (
+            <p className="text-sm text-muted-foreground">⭐ Almost done! Final stretch!</p>
+          )}
+          {completionPercentage === 100 && (
+            <p className="text-sm text-muted-foreground">🏆 Congratulations! You've mastered this roadmap!</p>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
 
 const NodeCard = ({
   node,
   nodeProgress,
+  getNodeProgressById,
   depth = 0,
   roadmapId,
   isAuthenticated,
@@ -253,6 +402,7 @@ const NodeCard = ({
 }: {
   node: RoadmapNode
   nodeProgress?: INodeProgressResponse
+  getNodeProgressById?: (nodeId: string) => INodeProgressResponse | undefined
   depth?: number
   roadmapId?: string
   isAuthenticated?: boolean
@@ -301,7 +451,7 @@ const NodeCard = ({
   }
 
   return (
-    <div className={`ml-${Math.min(depth * 4, 16)}`}>
+    <div style={{ marginLeft: `${Math.min(depth * 16, 64)}px` }}>
       <Card 
         className={`mb-3 border-l-4 transition-all duration-200 cursor-pointer hover:shadow-md ${getStatusColor()} ${isHovered ? 'ring-1 ring-primary/30' : ''}`}
         onMouseEnter={() => setIsHovered(true)}
@@ -358,7 +508,7 @@ const NodeCard = ({
                 {node.estimatedDuration && (
                   <div className="flex items-center gap-1 text-muted-foreground">
                     <Clock className="h-3.5 w-3.5 text-primary" />
-                    <span>{node.estimatedDuration.value} {node.estimatedDuration.unit}</span>
+                    <span>{formatDurationLabel(node.estimatedDuration, "Self-paced")}</span>
                   </div>
                 )}
 
@@ -392,7 +542,7 @@ const NodeCard = ({
                     {node.resources?.slice(0, 4).map((resource) => (
                       <a
                         key={resource._id}
-                        href={resource.url}
+                        href={normalizeResourceUrl(resource.url)}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-1.5 px-2 py-1 text-xs bg-primary/10 hover:bg-primary/20 text-primary rounded-md transition-colors"
@@ -428,7 +578,8 @@ const NodeCard = ({
             <NodeCard
               key={child._id}
               node={child}
-              nodeProgress={nodeProgress}
+              nodeProgress={getNodeProgressById?.(child._id)}
+              getNodeProgressById={getNodeProgressById}
               depth={depth + 1}
               roadmapId={roadmapId}
               isAuthenticated={isAuthenticated}
@@ -451,7 +602,7 @@ const RoadmapInfo = ({ roadmap }: { roadmap: RoadmapDetails }) => (
         <div className="flex items-center gap-3">
           <Clock className="h-5 w-5 text-primary" />
           <span className="text-muted-foreground">
-            Estimated Duration: {roadmap.estimatedDuration.value} {roadmap.estimatedDuration.unit}
+            Estimated Duration: {formatDurationLabel(roadmap.estimatedDuration, "Self-paced")}
           </span>
         </div>
       )}
@@ -460,20 +611,20 @@ const RoadmapInfo = ({ roadmap }: { roadmap: RoadmapDetails }) => (
         <div className="flex items-center gap-3">
           <UserIcon className="h-5 w-5 text-primary" />
           <div className="flex items-center gap-2">
-            <Avatar className="h-6 w-6">
-              <AvatarImage src={roadmap.contributor.avatar || "/placeholder.svg"} />
-              <AvatarFallback>{roadmap.contributor.username[0].toUpperCase()}</AvatarFallback>
-            </Avatar>
-            <span className="text-muted-foreground">Created by {roadmap.contributor.username}</span>
+              <Avatar className="h-6 w-6">
+                <AvatarImage src={roadmap.contributor.avatar || ""} />
+                <AvatarFallback>{getSafeInitial(roadmap.contributor.username)}</AvatarFallback>
+              </Avatar>
+              <span className="text-muted-foreground">Created by {roadmap.contributor.username}</span>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
       {roadmap.lastUpdated && (
         <div className="flex items-center gap-3">
           <Calendar className="h-5 w-5 text-primary" />
           <span className="text-muted-foreground">
-            Last updated: {new Date(roadmap.lastUpdated).toLocaleDateString()}
+            Last updated: {formatSafeDate(roadmap.lastUpdated)}
           </span>
         </div>
       )}
@@ -508,13 +659,13 @@ const ReviewsSection = ({ reviews }: { reviews: Review[] }) => (
           <div key={review._id} className="border-b border-border pb-4 last:border-b-0">
             <div className="flex items-start gap-3">
               <Avatar className="h-8 w-8">
-                <AvatarImage src={review.user.avatar || "/placeholder.svg"} />
-                <AvatarFallback>{review.user.username[0].toUpperCase()}</AvatarFallback>
+                <AvatarImage src={review.user?.avatar || ""} />
+                <AvatarFallback>{getSafeInitial(review.user?.username)}</AvatarFallback>
               </Avatar>
 
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="font-medium text-foreground">{review.user.username}</span>
+                  <span className="font-medium text-foreground">{review.user?.username || "Anonymous"}</span>
                   <div className="flex items-center">
                     {[...Array(5)].map((_, i) => (
                       <Star
@@ -523,7 +674,7 @@ const ReviewsSection = ({ reviews }: { reviews: Review[] }) => (
                       />
                     ))}
                   </div>
-                  <span className="text-sm text-muted-foreground">{review.createdAt.toLocaleDateString()}</span>
+                  <span className="text-sm text-muted-foreground">{formatSafeDate(review.createdAt as any)}</span>
                 </div>
 
                 {review.comment && <p className="text-muted-foreground">{review.comment}</p>}
@@ -576,16 +727,15 @@ export default function RoadmapDetailsPage() {
     if (!roadmapId) return
 
     dispatch(getRoadMapDetails(roadmapId))
+      .unwrap()
       .then(() => {
-        // record recently viewed on backend
         axiosInstance.post('/api/recently-viewed', { roadmapId }).catch(() => {})
-
-        dispatch(fetchUserProgress(roadmapId))
-          .then(() => toast.success("Fetched user progress successfully"))
-          .catch(() => toast.error("Failed to fetch the user progress"))
+        if (isAuthenticated) {
+          dispatch(fetchUserProgress(roadmapId)).catch(() => {})
+        }
       })
       .catch(() => toast.error("Failed to fetch roadmap details"))
-  }, [roadmapId, dispatch])
+  }, [roadmapId, dispatch, isAuthenticated])
 
   useEffect(() => {
     socket.on("progressUpdated", ({ roadmapId: id, nodeId, status }) => {
@@ -596,7 +746,10 @@ export default function RoadmapDetailsPage() {
 
           return {
             ...prev,
-            nodes: prev.nodes.map((node) => (node.node._id === nodeId ? { ...node, status } : node)),
+            nodes: prev.nodes.map((node) => {
+              const currentNodeId = typeof node.node === "string" ? node.node : node.node?._id
+              return currentNodeId === nodeId ? { ...node, status } : node
+            }),
           }
         })
       }
@@ -726,45 +879,237 @@ const handleAddBookmark = () => {
     }
   };
 
-  // Download roadmap as JSON
-  const handleDownloadRoadmap = () => {
+  // Generate PDF from roadmap data
+  const generatePDFRoadmap = (roadmapData: any, allNodes: any[]) => {
+    const pdf = new jsPDF();
+    let yPosition = 20;
+    const pageHeight = pdf.internal.pageSize.height;
+    const margin = 15;
+    const maxWidth = 180;
+
+    // Helper to add new page if needed
+    const checkPageBreak = (neededSpace: number) => {
+      if (yPosition + neededSpace > pageHeight - 20) {
+        pdf.addPage();
+        yPosition = 20;
+        return true;
+      }
+      return false;
+    };
+
+    // Title
+    pdf.setFontSize(22);
+    pdf.setTextColor(41, 128, 185);
+    pdf.text(roadmapData.title || "Learning Roadmap", margin, yPosition);
+    yPosition += 12;
+
+    // Category & Difficulty badges
+    pdf.setFontSize(10);
+    pdf.setTextColor(100, 100, 100);
+    const metaText = `${roadmapData.category || 'General'} | ${roadmapData.difficulty || 'Beginner'}`;
+    pdf.text(metaText, margin, yPosition);
+    yPosition += 8;
+
+    // Duration
+    if (roadmapData.estimatedDuration?.value) {
+      pdf.text(`Duration: ${roadmapData.estimatedDuration.value} ${roadmapData.estimatedDuration.unit || 'weeks'}`, margin, yPosition);
+      yPosition += 8;
+    }
+
+    // Description
+    pdf.setFontSize(11);
+    pdf.setTextColor(60, 60, 60);
+    if (roadmapData.description) {
+      const descLines = pdf.splitTextToSize(roadmapData.description, maxWidth);
+      pdf.text(descLines, margin, yPosition);
+      yPosition += (descLines.length * 5) + 10;
+    }
+
+    // Divider
+    pdf.setDrawColor(200, 200, 200);
+    pdf.line(margin, yPosition, 195, yPosition);
+    yPosition += 10;
+
+    // Learning Path Header
+    pdf.setFontSize(16);
+    pdf.setTextColor(44, 62, 80);
+    pdf.text("Learning Path", margin, yPosition);
+    yPosition += 12;
+
+    // Process nodes recursively
+    const processNodes = (nodeList: any[], depth: number = 0) => {
+      nodeList.forEach((node: any, index: number) => {
+        checkPageBreak(35);
+        
+        const indent = margin + (depth * 10);
+        const nodeNum = depth === 0 ? `${index + 1}.` : `•`;
+
+        // Node title
+        pdf.setFontSize(depth === 0 ? 13 : 11);
+        pdf.setTextColor(depth === 0 ? 41 : 80, depth === 0 ? 128 : 80, depth === 0 ? 185 : 80);
+        pdf.text(`${nodeNum} ${node.title || 'Untitled'}`, indent, yPosition);
+        yPosition += 6;
+
+        // Node description
+        if (node.description) {
+          pdf.setFontSize(9);
+          pdf.setTextColor(100, 100, 100);
+          const nodeLines = pdf.splitTextToSize(node.description, maxWidth - indent);
+          pdf.text(nodeLines, indent + 5, yPosition);
+          yPosition += (nodeLines.length * 4) + 3;
+        }
+
+        // Duration if available
+        if (node.estimatedDuration?.value) {
+          pdf.setFontSize(8);
+          pdf.setTextColor(120, 120, 120);
+          pdf.text(`Duration: ${node.estimatedDuration.value} ${node.estimatedDuration.unit || 'days'}`, indent + 5, yPosition);
+          yPosition += 5;
+        }
+
+        // Resources
+        const resources = node.resources || [];
+        if (resources.length > 0) {
+          checkPageBreak(resources.length * 5 + 5);
+          pdf.setFontSize(9);
+          pdf.setTextColor(46, 134, 193);
+          pdf.text("Resources:", indent + 5, yPosition);
+          yPosition += 4;
+
+          resources.slice(0, 5).forEach((resource: any) => {
+            checkPageBreak(5);
+            pdf.setFontSize(8);
+            pdf.setTextColor(80, 80, 80);
+            const resourceTitle = resource.title || 'Resource';
+            const resourceUrl = resource.url || '';
+            pdf.text(`- ${resourceTitle}`, indent + 10, yPosition);
+            yPosition += 3;
+            if (resourceUrl) {
+              pdf.setTextColor(100, 149, 237);
+              try {
+                pdf.textWithLink(resourceUrl.substring(0, 60) + (resourceUrl.length > 60 ? '...' : ''), indent + 15, yPosition, { url: resourceUrl });
+              } catch {
+                pdf.text(resourceUrl.substring(0, 60) + (resourceUrl.length > 60 ? '...' : ''), indent + 15, yPosition);
+              }
+              yPosition += 4;
+            }
+          });
+          yPosition += 3;
+        }
+
+        yPosition += 4;
+
+        // Process children
+        if (node.children && node.children.length > 0) {
+          processNodes(node.children, depth + 1);
+        }
+      });
+    };
+
+    processNodes(allNodes);
+
+    // Footer
+    checkPageBreak(20);
+    yPosition = pageHeight - 15;
+    pdf.setFontSize(8);
+    pdf.setTextColor(150, 150, 150);
+    pdf.text(`Generated on ${new Date().toLocaleDateString()} | Roadmap Learning Platform`, margin, yPosition);
+
+    return pdf;
+  };
+
+  // Download roadmap as PDF or JSON
+  const handleDownloadRoadmap = (format: "pdf" | "json" = "pdf") => {
     if (!RoadmapDetails) {
       toast.error("No roadmap data available");
       return;
     }
 
+    const roadmap = (RoadmapDetails as any)?.roadmap || RoadmapDetails;
+    const allNodes = (RoadmapDetails as any)?.nodes || [];
     const roadmapData = {
-      title: RoadmapDetails.title || RoadmapDetails.roadmap?.title,
-      description: RoadmapDetails.description || RoadmapDetails.roadmap?.description,
-      category: RoadmapDetails.category || RoadmapDetails.roadmap?.category,
-      difficulty: RoadmapDetails.difficulty || RoadmapDetails.roadmap?.difficulty,
-      nodes: RoadmapDetails.nodes || [],
+      _id: roadmap?._id,
+      title: roadmap?.title,
+      description: roadmap?.description,
+      longDescription: roadmap?.longDescription,
+      category: roadmap?.category,
+      difficulty: roadmap?.difficulty,
+      estimatedDuration: roadmap?.estimatedDuration,
+      tags: roadmap?.tags || [],
+      prerequisites: roadmap?.prerequisites || [],
+      nodes: allNodes,
       exportedAt: new Date().toISOString(),
+      exportVersion: "1.1",
     };
 
-    const blob = new Blob([JSON.stringify(roadmapData, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${(roadmapData.title || 'roadmap').replace(/\s+/g, '-').toLowerCase()}.json`;
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    toast.success("Roadmap downloaded!");
+    const filename = (roadmapData.title || 'roadmap').replace(/\s+/g, '-').toLowerCase();
+
+    if (format === "pdf") {
+      try {
+        const pdf = generatePDFRoadmap(roadmapData, allNodes);
+        pdf.save(`${filename}.pdf`);
+        toast.success("📄 Roadmap downloaded as PDF!");
+      } catch (error) {
+        console.error("PDF generation error:", error);
+        toast.error("Failed to generate PDF. Downloading as JSON instead.");
+        handleDownloadRoadmap("json");
+      }
+    } else {
+      const blob = new Blob([JSON.stringify(roadmapData, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${filename}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      toast.success("📁 Roadmap downloaded as JSON!");
+    }
   };
 
   // 👉 Now conditionally render after all hooks
   if (!RoadmapDetails) {
-    return <p>Loading roadmap...</p>
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
+          <p className="text-muted-foreground">Loading roadmap details...</p>
+        </div>
+      </div>
+    )
   }
 
   // Handle both structures: direct roadmap or nested { roadmap, nodes }
   const nodes = RoadmapDetails.nodes || []
   const roadmap = RoadmapDetails.roadmap || RoadmapDetails
 
+  // Validate we have minimum required data
+  if (!roadmap?._id && !roadmap?.title) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <AlertCircle className="w-12 h-12 text-muted-foreground mx-auto" />
+          <p className="text-muted-foreground">Roadmap data not available</p>
+          <Button onClick={() => navigate('/roadmaps')} variant="outline">
+            Browse Roadmaps
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
+  const progressMap = useMemo(() => {
+    const map = new Map<string, INodeProgressResponse>()
+    userProgress?.nodes?.forEach((entry: any) => {
+      const id = typeof entry.node === "string" ? entry.node : entry.node?._id
+      if (id) map.set(id, entry)
+    })
+    return map
+  }, [userProgress])
+
   const getNodeProgress = (nodeId: string): INodeProgressResponse | undefined => {
-    return userProgress?.nodes?.find((progress) => progress.node._id === nodeId)
+    return progressMap.get(nodeId)
   }
   return (
     <div className="min-h-screen bg-background">
@@ -803,6 +1148,7 @@ const handleAddBookmark = () => {
                       key={node._id}
                       node={node}
                       nodeProgress={getNodeProgress(node._id)}
+                      getNodeProgressById={getNodeProgress}
                       roadmapId={roadmapId}
                       isAuthenticated={isAuthenticated}
                       navigate={navigate}
@@ -827,7 +1173,7 @@ const handleAddBookmark = () => {
             <Card>
               <CardContent className="p-6 space-y-3">
                 <Button className="w-full" onClick={startProgress} disabled={isLoading}>
-                  {userProgress && userProgress.stats.completedNodes > 0 ? "Continue Learning" : "Start Learning"}
+                  {userProgress?.stats?.completedNodes > 0 ? "Continue Learning" : "Start Learning"}
                 </Button>
 
                 {!isBookmarked ? (
@@ -861,14 +1207,24 @@ const handleAddBookmark = () => {
                   Share Roadmap
                 </Button>
 
-                <Button 
-                  variant="outline" 
-                  className="w-full bg-transparent hover:bg-primary/10"
-                  onClick={handleDownloadRoadmap}
-                >
-                  <Download className="mr-2 h-4 w-4" />
-                  Download Roadmap
-                </Button>
+                <div className="flex gap-2 w-full">
+                  <Button 
+                    variant="outline" 
+                    className="flex-1 bg-transparent hover:bg-primary/10"
+                    onClick={() => handleDownloadRoadmap("pdf")}
+                  >
+                    <FileDown className="mr-2 h-4 w-4" />
+                    PDF
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="flex-1 bg-transparent hover:bg-primary/10"
+                    onClick={() => handleDownloadRoadmap("json")}
+                  >
+                    <Download className="mr-2 h-4 w-4" />
+                    JSON
+                  </Button>
+                </div>
               </CardContent>
             </Card>
           </div>

@@ -14,14 +14,14 @@ export default function ReviewCard({ review }: ReviewCardProps) {
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString)
-    return date.toLocaleDateString("en-US", {
+    return Number.isNaN(date.getTime()) ? "N/A" : date.toLocaleDateString("en-US", {
       year: "numeric",
       month: "long",
       day: "numeric",
     })
   }
 
-  const shouldShowExpandButton = review.review.length > 200
+  const shouldShowExpandButton = (review.review || "").length > 200
 
   return (
     <div className="group bg-slate-800 rounded-xl p-6 transition-all duration-300 hover:bg-slate-700 hover:shadow-xl hover:shadow-blue-500/10 border border-slate-700 hover:border-blue-500/30">
@@ -29,7 +29,7 @@ export default function ReviewCard({ review }: ReviewCardProps) {
       <div className="flex items-start justify-between mb-4">
         <div className="flex-1">
           <div className="flex items-center gap-2 mb-2">
-            <p className="font-bold text-slate-200">Reviewed by {review.user.name}</p>
+            <p className="font-bold text-slate-200">Reviewed by {review.user?.name || "Anonymous"}</p>
             {review.isVerified && (
               <div className="flex items-center gap-1 px-2 py-1 bg-blue-600/20 text-blue-400 rounded-full text-xs border border-blue-500/30">
                 <CheckCircle className="h-3 w-3" />
@@ -38,10 +38,10 @@ export default function ReviewCard({ review }: ReviewCardProps) {
             )}
           </div>
           <a
-            href={`/roadmaps/${review.roadmap._id}`}
+            href={`/details/${review.roadmap?._id || ''}`}
             className="text-blue-400 hover:text-blue-300 transition-colors font-medium"
           >
-            {review.roadmap.title}
+            {review.roadmap?.title || 'Unknown Roadmap'}
           </a>
         </div>
 
@@ -63,7 +63,7 @@ export default function ReviewCard({ review }: ReviewCardProps) {
       {/* Review Content */}
       <div className="mb-4">
         <p className="text-slate-300 leading-relaxed">
-          {shouldShowExpandButton && !isExpanded ? `${review.review.substring(0, 200)}...` : review.review}
+          {shouldShowExpandButton && !isExpanded ? `${(review.review || "").substring(0, 200)}...` : review.review || ""}
         </p>
         {shouldShowExpandButton && (
           <button

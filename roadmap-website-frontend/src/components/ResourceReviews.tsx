@@ -51,7 +51,7 @@ const ResourceReviews: React.FC<ResourceReviewsProps> = ({ resourceId }) => {
     }
   }, [dispatch, resourceId]);
 
-  const userReview = resourceReviews.find(review => review.user._id === user?._id);
+  const userReview = resourceReviews.find(review => review.user?._id === user?._id);
 
   const resetForm = () => {
     setRating(5);
@@ -217,11 +217,11 @@ const ResourceReviews: React.FC<ResourceReviewsProps> = ({ resourceId }) => {
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-[#60A5FA] rounded-full flex items-center justify-center">
                     <span className="text-white font-semibold">
-                      {review.user.name.charAt(0).toUpperCase()}
+                      {(review.user?.name || "?").charAt(0).toUpperCase()}
                     </span>
                   </div>
                   <div>
-                    <p className="font-medium text-[#E2E8F0]">{review.user.name}</p>
+                    <p className="font-medium text-[#E2E8F0]">{review.user?.name || "Anonymous"}</p>
                     <p className="text-sm text-[#94A3B8]">{formatDate(review.createdAt)}</p>
                   </div>
                 </div>
@@ -277,7 +277,7 @@ const ResourceReviews: React.FC<ResourceReviewsProps> = ({ resourceId }) => {
               )}
 
               {/* Review Actions (only for review owner) */}
-              {user && review.user._id === user._id && (
+              {user && review.user?._id === user._id && (
                 <div className="flex gap-2 pt-4 border-t border-[#334155]">
                   <Button
                     size="sm"

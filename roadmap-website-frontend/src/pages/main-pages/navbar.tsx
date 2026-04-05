@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import ProfileDropdown from '@/components/ProfileDropdown';
 import { useAuth } from '@/contexts/authContext';
+import { Link } from 'react-router-dom';
 import { 
   Route,
   Menu,
   X,
   Home,
   TrendingUp,
-  
   User,
   BookOpen
 } from 'lucide-react';
@@ -74,26 +74,26 @@ const Navbar: React.FC = () => {
             {navItems
               .filter(item => item.name !== 'Profile')
               .map((item) => (
-                <a
+                <Link
                   key={item.id}
-                  href={item.path}
+                  to={item.path}
                   className="flex items-center text-[#E2E8F0] hover:text-[#3B82F6] transition-colors"
                 >
                   <span className="mr-2">{item.icon}</span>
                   {item.name}
-                </a>
+                </Link>
               ))}
             {isAuthenticated ? (
               <>
                 <ProfileDropdown />
               </>
             ) : (
-              <a
-                href="/login"
+              <Link
+                to="/login"
                 className="px-4 py-2 bg-[#2563EB] text-white rounded hover:bg-[#1D4ED8] ml-4"
               >
                 Login
-              </a>
+              </Link>
             )}
           </div>
 
@@ -120,26 +120,26 @@ const Navbar: React.FC = () => {
               {navItems
                 .filter(item => item.name !== 'Profile')
                 .map((item) => (
-                  <a
+                  <Link
                     key={item.id}
-                    href={item.path}
+                    to={item.path}
                     className="flex items-center px-4 py-2 text-[#E2E8F0] hover:bg-[#1E293B] hover:text-[#3B82F6] rounded-lg transition-colors"
                     onClick={() => setIsMobileMenuOpen(false)}
                   >
                     <span className="mr-3">{item.icon}</span>
                     {item.name}
-                  </a>
+                  </Link>
                 ))}
               {isAuthenticated ? (
                 <ProfileDropdown />
               ) : (
-                <a
-                  href="/login"
+                <Link
+                  to="/login"
                   className="px-4 py-2 bg-[#2563EB] text-white rounded hover:bg-[#1D4ED8] mt-2"
                   onClick={() => setIsMobileMenuOpen(false)}
                 >
                   Login
-                </a>
+                </Link>
               )}
             </div>
           </div>

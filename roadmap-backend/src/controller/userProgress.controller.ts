@@ -105,13 +105,32 @@ export const updateNodeProgress = async (req: reqwithuser, res: Response) => {
 
     console.log("Params:", { roadmapId, nodeId, userId, status });
 
-    const progress = await UserProgress.findOne({
+    let progress = await UserProgress.findOne({
       user: new mongoose.Types.ObjectId(userId),
       roadmap: new mongoose.Types.ObjectId(roadmapId),
     });
 
     if (!progress) {
-      return res.status(404).json({ message: "Progress not found" });
+      const nodes = await RoadmapNode.find({ roadmap: roadmapId }).lean();
+      if (!nodes || nodes.length === 0) {
+        return res.status(404).json({ message: "No nodes found for this roadmap" });
+      }
+
+      const nodeProgress = nodes.map((n) => ({
+        node: n._id,
+        status: "not_started" as const,
+        resources: n.resources?.map((r) => ({
+          resource: r,
+          status: "not_started" as const,
+        })),
+      }));
+
+      progress = await UserProgress.create({
+        user: userId,
+        roadmap: roadmapId,
+        nodes: nodeProgress,
+        currentNodes: [nodes[0]._id],
+      });
     }
 
     // find the node inside user's progress

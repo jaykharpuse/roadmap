@@ -223,9 +223,12 @@ const Roadmaps: React.FunctionComponent = () => {
     }
   }
 
-  const formatDuration = (duration?: { value: number; unit: string }) => {
-    if (!duration) return "Duration not specified"
-    return `${duration.value} ${duration.unit}`
+  const formatDuration = (duration?: { value?: number; unit?: string } | null) => {
+    if (!duration || duration.value === undefined || duration.value === null) {
+      return "Self-paced"
+    }
+    const unit = duration.unit || "weeks"
+    return `${duration.value} ${unit}`
   }
 
   const getCategoryIcon = (category: string) => {
@@ -335,8 +338,23 @@ const Roadmaps: React.FunctionComponent = () => {
                 <Card
                   key={roadmap._id}
                   onClick={()=>navigate(`/details/${roadmap._id}`)}
-                  className="bg-slate-800/50 border-slate-700/50 backdrop-blur-sm hover:bg-slate-700/50 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-blue-500/10 group cursor-pointer"
+                  className="bg-slate-800/50 border-slate-700/50 backdrop-blur-sm hover:bg-slate-700/50 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-blue-500/10 group cursor-pointer overflow-hidden"
                 >
+                  {/* Cover Image */}
+                  {roadmap.coverImage?.url && (
+                    <div className="relative h-32 w-full overflow-hidden">
+                      <img 
+                        src={roadmap.coverImage.url} 
+                        alt={roadmap.title}
+                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = 'none';
+                        }}
+                      />
+                      <div className="absolute inset-0 bg-gradient-to-t from-slate-800/90 to-transparent" />
+                    </div>
+                  )}
+                  
                   <CardHeader className="space-y-3">
                     <div className="flex items-start justify-between">
                       <div className="flex items-center gap-2">
@@ -394,7 +412,7 @@ const Roadmaps: React.FunctionComponent = () => {
                     <div className="flex items-center justify-between text-sm text-slate-400">
                       <div className="flex items-center gap-1">
                         <Users className="w-4 h-4" />
-                        <span>{roadmap.contributor?.username}</span>
+                        <span>{roadmap.contributor?.username || "AI Generated"}</span>
                       </div>
 
                       <div className="flex items-center gap-4">
@@ -404,7 +422,7 @@ const Roadmaps: React.FunctionComponent = () => {
                         </div>
                         <div className="flex items-center gap-1">
                           <Star className="w-4 h-4" />
-                          <span>{roadmap.stats?.averageRating?.toFixed(1) || "0.0"}</span>
+                          <span>{roadmap.stats?.averageRating?.toFixed(1) || "4.5"}</span>
                         </div>
                       </div>
                     </div>

@@ -134,6 +134,18 @@ const userProgressSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
+      .addCase(startRoadmap.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(startRoadmap.fulfilled, (state, action) => {
+        state.loading = false;
+        state.progress = (action.payload as any)?.progress ?? (action.payload as any);
+      })
+      .addCase(startRoadmap.rejected, (state, action) => {
+        state.loading = false;
+        state.error = (action.payload as string) ?? "Failed to start roadmap";
+      })
       .addCase(fetchUserProgress.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -142,13 +154,22 @@ const userProgressSlice = createSlice({
         fetchUserProgress.fulfilled,
         (state, action: PayloadAction<IUserProgressResponse>) => {
           state.loading = false;
-          state.progress = action.payload;
+          state.progress = (action.payload as any)?.progress ?? action.payload;
         }
       )
-      // .addCase(fetchUserProgress.rejected, (state, action) => {
-      //   state.loading = false;
-      //   state.error = action.payload ?? "Unknown error";
-      // })
+      .addCase(fetchUserProgress.rejected, (state, action) => {
+        state.loading = false;
+        state.error = (action.payload as string) ?? "Failed to fetch user progress";
+      })
+      .addCase(updateUserProgress.pending, (state) => {
+        state.error = null;
+      })
+      .addCase(updateUserProgress.fulfilled, (state, action: PayloadAction<IUserProgressResponse>) => {
+        state.progress = (action.payload as any)?.progress ?? action.payload;
+      })
+      .addCase(updateUserProgress.rejected, (state, action) => {
+        state.error = (action.payload as string) ?? "Failed to update progress";
+      })
 
       .addCase(
         upsertUserProgress.fulfilled,

@@ -15,7 +15,8 @@ import {
     downvoteRoadmap,
     regenerateRoadmap,
     getTrendingRoadmaps,
-    seedSampleRoadmaps, 
+    seedSampleRoadmaps,
+    fixRoadmaps, 
      } 
      from "../controller/roadmap.controller";
 
@@ -27,6 +28,7 @@ const RoadmapRouter = Router();
 RoadmapRouter.get('/', getRoadmapsPaginated); 
 RoadmapRouter.get('/trending', getTrendingRoadmaps);
 RoadmapRouter.post('/seed', seedSampleRoadmaps);
+RoadmapRouter.post('/fix', fixRoadmaps); // Fix existing roadmaps with missing data
 RoadmapRouter.post("/generate", isAuthenticated , generateRoadmapWithAi);
 RoadmapRouter.get('/:idOrSlug', getRoadmapDetails); 
 RoadmapRouter.get('/:roadmapId/reviews', getRoadmapReviews); 

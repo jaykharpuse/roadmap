@@ -117,7 +117,10 @@ const roadmapSchema = new Schema<IRoadmap>(
     },
 
     estimatedDuration: {
-      value: Number,
+      value: {
+        type: Number,
+        default: 8,
+      },
       unit: {
         type: String,
         enum: ["hours", "days", "weeks", "months"],

@@ -31,7 +31,7 @@ export function BookmarkedRoadmaps() {
         return (
           <Link
             key={bookmark._id}
-            to={`/roadmaps/${roadmap.slug || roadmap._id}`}
+            to={`/details/${roadmap._id}`}
             className="block hover:bg-slate-700/30 rounded-lg p-4 transition-colors"
           >
             <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-2">

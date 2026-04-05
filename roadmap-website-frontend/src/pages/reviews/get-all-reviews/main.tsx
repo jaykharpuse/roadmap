@@ -185,10 +185,10 @@ export default function AllReviewsPage() {
       const query = searchQuery.toLowerCase();
       filtered = filtered.filter(
         (review) =>
-          review.user.name.toLowerCase().includes(query) ||
-          review.roadmap.title.toLowerCase().includes(query) ||
+          review.user?.name?.toLowerCase().includes(query) ||
+          review.roadmap?.title?.toLowerCase().includes(query) ||
           review.title?.toLowerCase().includes(query) ||
-          review.review.toLowerCase().includes(query)
+          review.review?.toLowerCase().includes(query)
       );
     }
 

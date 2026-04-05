@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useLocation } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "@/hooks/useAppDispatch";
 import { fetchResourceById, upvoteResource, downvoteResource } from "@/state/slices/resourceSlice";
 import { checkResourceBookmarked, createResourceBookmark, deleteResourceBookmark } from "@/state/slices/resourceBookmarkSlice";
@@ -387,7 +388,7 @@ const ResourceDetails: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { resource, loading, error } = useAppSelector((state) => state.resource);
-  const {user}= useAuth();
+  const { user } = useAuth();
   const [hasUpvoted, setHasUpvoted] = useState(false);
   const [hasDownvoted, setHasDownvoted] = useState(false);
   const [isBookmarked, setIsBookmarked] = useState(false);
@@ -552,7 +553,7 @@ const ResourceDetails: React.FC = () => {
       <div className="container mx-auto px-4 py-8 md:py-12 max-w-7xl">
         {/* Breadcrumb */}
         <div className="mb-6 flex items-center gap-2 text-sm text-[#E2E8F0]/60">
-          <a href="/resources" className="hover:text-[#60A5FA] transition-colors">Resources</a>
+          <Link to="/resources" className="hover:text-[#60A5FA] transition-colors">Resources</Link>
           <span>/</span>
           <span className="text-[#60A5FA] capitalize">{resource.resourceType}</span>
         </div>
@@ -569,9 +570,12 @@ const ResourceDetails: React.FC = () => {
             {/* Thumbnail */}
             <div className="relative w-full aspect-video rounded-xl overflow-hidden border border-[#334155] bg-[#1E293B] shadow-xl">
               <img
-                src={resource.thumbnail?.url || "/placeholder.svg"}
+                src={resource.thumbnail?.url || ""}
                 alt={resource.title}
                 className="w-full h-full object-cover"
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).style.display = "none";
+                }}
               />
             </div>
 
@@ -596,7 +600,7 @@ const ResourceDetails: React.FC = () => {
 
             {/* Resource Reviews */}
             <div className="bg-[#1E293B] border border-[#334155] rounded-xl p-6 shadow-xl">
-              <ResourceReviews resourceId={resource._id} />
+              {resource?._id ? <ResourceReviews resourceId={resource._id} /> : null}
             </div>
           </div>
 

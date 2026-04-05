@@ -197,7 +197,7 @@ export const roadmapSlice = createSlice({
       .addCase(getRoadMapDetails.fulfilled, (state, action) => {
         state.isLoading = false;
         state.error = null;
-        state.roadmap = action.payload?.data || action.payload || null;
+        state.roadmap = action.payload?.data || action.payload?.roadmap || action.payload || null;
       })
       // Generate Roadmap
       .addCase(generateRoadmap.pending, (state, action) => {
@@ -217,7 +217,7 @@ export const roadmapSlice = createSlice({
         state.error = null;
         state.lastGenerationError = null;
         state.generationAttempts = 0;
-        state.roadmap = action.payload?.data || action.payload || null;
+        state.roadmap = action.payload?.data || action.payload?.roadmap || action.payload || null;
       });
   },
 });

@@ -27,7 +27,7 @@ const ProfileDropdown: React.FC = () => {
             />
           ) : (
             <span className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold">
-              {user.username?.charAt(0).toUpperCase()}
+              {(user.username || "U").charAt(0).toUpperCase()}
             </span>
           )}
           <span className="hidden md:inline text-[#E2E8F0] font-medium">{user.username}</span>

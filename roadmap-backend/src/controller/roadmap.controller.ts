@@ -10,6 +10,26 @@ import { error } from "console";
 import { generateRoadmap } from "../services/generateroadmap_service";
 import Resource from "../models/resource.model";
 import { userSocketMap } from "../index";
+import { fixExistingRoadmaps } from "../services/fixExistingRoadmaps";
+
+// Fix existing roadmaps with missing data
+export const fixRoadmaps = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
+  try {
+    const result = await fixExistingRoadmaps();
+    res.status(200).json({
+      success: true,
+      message: `Fixed ${result.fixed} roadmaps`,
+      data: result
+    });
+  } catch (err) {
+    next(err);
+  }
+};
+
 export const getRoadmapsPaginated = async (
   req: Request,
   res: Response,
@@ -86,9 +106,9 @@ export const generateRoadmapWithAi = async (
     // Get socketId from user's socket mapping or fallback
     const socketId = req.user?._id ? userSocketMap.get(req.user._id.toString()) : undefined;
 
-    // Set a timeout for the entire operation (60 seconds - fast generation)
+    // Set a timeout for the entire operation
     const timeoutPromise = new Promise((_, reject) => {
-      setTimeout(() => reject(new Error("Roadmap generation timeout - please try again")), 60000); // 1 min timeout
+      setTimeout(() => reject(new Error("Roadmap generation timeout - please try again")), 120000); // 2 min timeout
     });
 
     const generationPromise = generateRoadmap({
@@ -243,7 +263,6 @@ export const getRoadmapDetails = async (
     const nodes = await RoadmapNode.find({ roadmap: roadmap._id })
       .populate({
         path: "resources",
-        match: { isApproved: true },
         select: "-upvotes -downvotes",
       })
       .populate("dependencies prerequisites", "title _id")
@@ -737,6 +756,26 @@ export const getTrendingRoadmaps = async (
   }
 };
 
+// Category to cover image mapping
+const categoryImages: Record<string, string> = {
+  "frontend": "https://images.unsplash.com/photo-1621839673705-6617adf9e890?w=800&h=400&fit=crop",
+  "backend": "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800&h=400&fit=crop",
+  "web-development": "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800&h=400&fit=crop",
+  "devops": "https://images.unsplash.com/photo-1667372393119-3d4c48d07fc9?w=800&h=400&fit=crop",
+  "mobile": "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=800&h=400&fit=crop",
+  "mobile-development": "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=800&h=400&fit=crop",
+  "data-science": "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=400&fit=crop",
+  "design": "https://images.unsplash.com/photo-1561070791-2526d30994b5?w=800&h=400&fit=crop",
+  "product-management": "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=800&h=400&fit=crop",
+  "cybersecurity": "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=800&h=400&fit=crop",
+  "cloud": "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=800&h=400&fit=crop",
+  "blockchain": "https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=800&h=400&fit=crop",
+  "ai": "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&h=400&fit=crop",
+  "machine-learning": "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&h=400&fit=crop",
+  "programming": "https://images.unsplash.com/photo-1515879218367-8466d910aaa4?w=800&h=400&fit=crop",
+  "other": "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&h=400&fit=crop",
+};
+
 // Seed sample roadmaps for new users
 export const seedSampleRoadmaps = async (
   req: reqwithuser,
@@ -765,7 +804,9 @@ export const seedSampleRoadmaps = async (
         isPublished: true,
         publishedAt: new Date(),
         isCommunityContributed: true,
-        stats: { views: 150 },
+        estimatedDuration: { value: 12, unit: "weeks" },
+        coverImage: { public_id: "roadmap-web-development-cover", url: categoryImages["web-development"] },
+        stats: { views: 150, completions: 25, averageRating: 4.7, ratingCount: 18 },
       },
       {
         title: "Python for Data Science",
@@ -776,18 +817,22 @@ export const seedSampleRoadmaps = async (
         isPublished: true,
         publishedAt: new Date(),
         isCommunityContributed: true,
-        stats: { views: 120 },
+        estimatedDuration: { value: 10, unit: "weeks" },
+        coverImage: { public_id: "roadmap-data-science-cover", url: categoryImages["data-science"] },
+        stats: { views: 120, completions: 18, averageRating: 4.5, ratingCount: 12 },
       },
       {
         title: "React.js Complete Guide",
         description: "Build modern web applications with React. Learn hooks, state management, routing and best practices.",
-        category: "web-development",
+        category: "frontend",
         difficulty: "intermediate",
         tags: ["react", "javascript", "frontend", "web"],
         isPublished: true,
         publishedAt: new Date(),
         isCommunityContributed: true,
-        stats: { views: 100 },
+        estimatedDuration: { value: 8, unit: "weeks" },
+        coverImage: { public_id: "roadmap-frontend-cover", url: categoryImages["frontend"] },
+        stats: { views: 100, completions: 15, averageRating: 4.6, ratingCount: 10 },
       },
       {
         title: "DevOps and Cloud Computing",
@@ -798,7 +843,9 @@ export const seedSampleRoadmaps = async (
         isPublished: true,
         publishedAt: new Date(),
         isCommunityContributed: true,
-        stats: { views: 90 },
+        estimatedDuration: { value: 14, unit: "weeks" },
+        coverImage: { public_id: "roadmap-devops-cover", url: categoryImages["devops"] },
+        stats: { views: 90, completions: 12, averageRating: 4.4, ratingCount: 8 },
       },
       {
         title: "Mobile App Development with React Native",
@@ -809,7 +856,48 @@ export const seedSampleRoadmaps = async (
         isPublished: true,
         publishedAt: new Date(),
         isCommunityContributed: true,
-        stats: { views: 80 },
+        estimatedDuration: { value: 10, unit: "weeks" },
+        coverImage: { public_id: "roadmap-mobile-development-cover", url: categoryImages["mobile-development"] },
+        stats: { views: 80, completions: 10, averageRating: 4.3, ratingCount: 6 },
+      },
+      {
+        title: "Backend Development with Node.js",
+        description: "Master server-side development with Node.js, Express, databases (MongoDB, PostgreSQL), and API design.",
+        category: "backend",
+        difficulty: "intermediate",
+        tags: ["nodejs", "express", "mongodb", "api", "backend"],
+        isPublished: true,
+        publishedAt: new Date(),
+        isCommunityContributed: true,
+        estimatedDuration: { value: 10, unit: "weeks" },
+        coverImage: { public_id: "roadmap-backend-cover", url: categoryImages["backend"] },
+        stats: { views: 95, completions: 14, averageRating: 4.5, ratingCount: 9 },
+      },
+      {
+        title: "Machine Learning Fundamentals",
+        description: "Learn machine learning algorithms, neural networks, and deep learning with practical projects.",
+        category: "machine-learning",
+        difficulty: "advanced",
+        tags: ["machine-learning", "ai", "python", "tensorflow", "neural-networks"],
+        isPublished: true,
+        publishedAt: new Date(),
+        isCommunityContributed: true,
+        estimatedDuration: { value: 16, unit: "weeks" },
+        coverImage: { public_id: "roadmap-machine-learning-cover", url: categoryImages["machine-learning"] },
+        stats: { views: 110, completions: 8, averageRating: 4.8, ratingCount: 15 },
+      },
+      {
+        title: "Cybersecurity Essentials",
+        description: "Learn network security, ethical hacking, penetration testing, and security best practices.",
+        category: "cybersecurity",
+        difficulty: "intermediate",
+        tags: ["security", "hacking", "network", "penetration-testing"],
+        isPublished: true,
+        publishedAt: new Date(),
+        isCommunityContributed: true,
+        estimatedDuration: { value: 12, unit: "weeks" },
+        coverImage: { public_id: "roadmap-cybersecurity-cover", url: categoryImages["cybersecurity"] },
+        stats: { views: 75, completions: 6, averageRating: 4.4, ratingCount: 5 },
       },
     ];
     

@@ -42,6 +42,35 @@ const validCategories = [
 const validDifficulties = ["beginner", "intermediate", "advanced", "expert"];
 const validNodeTypes = ["topic", "skill", "milestone", "project", "checkpoint"];
 
+// Category to cover image mapping for auto-generated roadmaps
+const categoryImages: Record<string, string> = {
+  "frontend": "https://images.unsplash.com/photo-1621839673705-6617adf9e890?w=800&h=400&fit=crop",
+  "backend": "https://images.unsplash.com/photo-1555066931-4365d14bab8c?w=800&h=400&fit=crop",
+  "web-development": "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800&h=400&fit=crop",
+  "devops": "https://images.unsplash.com/photo-1667372393119-3d4c48d07fc9?w=800&h=400&fit=crop",
+  "mobile": "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=800&h=400&fit=crop",
+  "mobile-development": "https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=800&h=400&fit=crop",
+  "data-science": "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&h=400&fit=crop",
+  "design": "https://images.unsplash.com/photo-1561070791-2526d30994b5?w=800&h=400&fit=crop",
+  "product-management": "https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?w=800&h=400&fit=crop",
+  "cybersecurity": "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?w=800&h=400&fit=crop",
+  "cloud": "https://images.unsplash.com/photo-1544197150-b99a580bb7a8?w=800&h=400&fit=crop",
+  "blockchain": "https://images.unsplash.com/photo-1639762681485-074b7f938ba0?w=800&h=400&fit=crop",
+  "ai": "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&h=400&fit=crop",
+  "machine-learning": "https://images.unsplash.com/photo-1677442136019-21780ecad995?w=800&h=400&fit=crop",
+  "programming": "https://images.unsplash.com/photo-1515879218367-8466d910aaa4?w=800&h=400&fit=crop",
+  "other": "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=800&h=400&fit=crop",
+};
+
+// Get cover image for category
+function getCoverImage(category: string): { public_id: string; url: string } {
+  const url = categoryImages[category] || categoryImages["other"];
+  return {
+    public_id: `roadmap-${category}-cover`,
+    url
+  };
+}
+
 // In-memory cache for recent roadmaps (production should use Redis)
 const roadmapCache = new Map<string, { data: any; timestamp: number }>();
 const CACHE_TTL = 10 * 60 * 1000; // 10 minutes
@@ -164,7 +193,48 @@ interface AIRoadmapResponse {
   description: string;
   category: string;
   difficulty: "beginner" | "intermediate" | "advanced" | "expert";
+  estimatedDuration?: EstimatedDuration;
   nodes: RoadmapNodeInput[];
+}
+
+function fallbackResourcesForNode(title: string): Array<{
+  title: string;
+  url: string;
+  resourceType: string;
+  description?: string;
+}> {
+  const t = title.toLowerCase();
+  if (t.includes("react")) {
+    return [
+      { title: "React Docs", url: "https://react.dev/learn", resourceType: "documentation", description: "Official React docs" },
+      { title: "React Full Course", url: "https://www.youtube.com/watch?v=bMknfKXIFA8", resourceType: "video", description: "Practical React course" },
+    ];
+  }
+  if (t.includes("node") || t.includes("express")) {
+    return [
+      { title: "Node.js Learn", url: "https://nodejs.org/en/learn", resourceType: "documentation", description: "Official Node.js learning path" },
+      { title: "Node.js Crash Course", url: "https://www.youtube.com/watch?v=fBNz5xF-Kx4", resourceType: "video", description: "Backend fundamentals" },
+    ];
+  }
+  if (t.includes("python")) {
+    return [
+      { title: "Python Tutorial", url: "https://docs.python.org/3/tutorial/", resourceType: "documentation", description: "Official tutorial" },
+      { title: "Python for Everybody", url: "https://www.py4e.com/", resourceType: "course", description: "Beginner-friendly course" },
+    ];
+  }
+  return [
+    { title: "freeCodeCamp", url: "https://www.freecodecamp.org/learn/", resourceType: "course", description: "Hands-on learning paths" },
+    { title: "MDN Web Docs", url: "https://developer.mozilla.org/", resourceType: "documentation", description: "Trusted technical docs" },
+  ];
+}
+
+function normalizeResourceUrl(url?: string): string {
+  if (!url || typeof url !== "string") return "";
+  const trimmed = url.trim();
+  if (!trimmed) return "";
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  if (/^[\w.-]+\.[a-z]{2,}(\/.*)?$/i.test(trimmed)) return `https://${trimmed}`;
+  return "";
 }
 
 // Progress tracking steps with more granular updates
@@ -183,13 +253,97 @@ const progressSteps = [
 let lastEmitTime = 0;
 const EMIT_DEBOUNCE = 100; // ms
 
-function emitProgress(socketId: string, step: string, progress: number, error?: string) {
+function emitProgress(socketId: string, step: string, progress: number, message?: string) {
   const now = Date.now();
   if (socketId && io && (now - lastEmitTime > EMIT_DEBOUNCE || step === 'error' || step === 'complete')) {
     lastEmitTime = now;
-    io.to(socketId).emit("roadmap-progress", { step, progress, error });
-    console.log(`[Progress] ${step}: ${progress}% ${error || ''}`);
+    io.to(socketId).emit("roadmap-progress", { step, progress, message });
+    console.log(`[Progress] ${step}: ${progress}% ${message || ''}`);
   }
+}
+
+// Helper to detect category from prompt - MOVED OUTSIDE
+function detectCategory(prompt: string): string {
+  const p = prompt.toLowerCase();
+  if (p.includes('react') || p.includes('vue') || p.includes('angular') || p.includes('frontend') || p.includes('css') || p.includes('html') || p.includes('tailwind')) return 'frontend';
+  if (p.includes('node') || p.includes('express') || p.includes('django') || p.includes('flask') || p.includes('backend') || p.includes('api') || p.includes('server')) return 'backend';
+  if (p.includes('python')) return 'programming';
+  if (p.includes('java') && !p.includes('javascript')) return 'programming';
+  if (p.includes('c++') || p.includes('rust') || p.includes('go lang') || p.includes('golang')) return 'programming';
+  if (p.includes('data science') || p.includes('pandas') || p.includes('numpy') || p.includes('analytics') || p.includes('data analyst')) return 'data-science';
+  if (p.includes('machine learning') || p.includes('ml') || p.includes('tensorflow') || p.includes('pytorch') || p.includes('deep learning')) return 'machine-learning';
+  if (p.includes('ai') || p.includes('artificial intelligence') || p.includes('gpt') || p.includes('llm') || p.includes('chatbot')) return 'ai';
+  if (p.includes('devops') || p.includes('docker') || p.includes('kubernetes') || p.includes('ci/cd') || p.includes('jenkins')) return 'devops';
+  if (p.includes('cloud') || p.includes('aws') || p.includes('azure') || p.includes('gcp') || p.includes('serverless')) return 'cloud';
+  if (p.includes('mobile') || p.includes('android') || p.includes('ios') || p.includes('flutter') || p.includes('react native') || p.includes('swift') || p.includes('kotlin')) return 'mobile-development';
+  if (p.includes('security') || p.includes('cyber') || p.includes('hacking') || p.includes('penetration') || p.includes('ethical')) return 'cybersecurity';
+  if (p.includes('blockchain') || p.includes('web3') || p.includes('solidity') || p.includes('ethereum') || p.includes('crypto')) return 'blockchain';
+  if (p.includes('design') || p.includes('ui') || p.includes('ux') || p.includes('figma') || p.includes('graphic')) return 'design';
+  if (p.includes('full stack') || p.includes('fullstack') || p.includes('mern') || p.includes('mean')) return 'web-development';
+  return 'web-development';
+}
+
+// Helper to detect difficulty - MOVED OUTSIDE
+function detectDifficulty(prompt: string): string {
+  const p = prompt.toLowerCase();
+  if (p.includes('beginner') || p.includes('basics') || p.includes('introduction') || p.includes('start') || p.includes('learn') || p.includes('new to')) return 'beginner';
+  if (p.includes('advanced') || p.includes('expert') || p.includes('master') || p.includes('senior') || p.includes('pro')) return 'advanced';
+  if (p.includes('intermediate') || p.includes('mid-level') || p.includes('improve')) return 'intermediate';
+  return 'beginner';
+}
+
+// Build the AI prompt
+function buildAIPrompt(userPrompt: string): string {
+  const category = detectCategory(userPrompt);
+  const difficulty = detectDifficulty(userPrompt);
+  
+  return `Create a comprehensive learning roadmap for: "${userPrompt}"
+
+Return ONLY valid JSON in this exact format:
+{
+  "title": "Clear professional title",
+  "description": "2-3 sentence overview of what learner will achieve",
+  "category": "${category}",
+  "difficulty": "${difficulty}",
+  "estimatedDuration": {"value": 12, "unit": "weeks"},
+  "nodes": [
+    {
+      "title": "Topic Name",
+      "description": "What will be learned and why it matters",
+      "nodeType": "topic",
+      "estimatedDuration": {"value": 2, "unit": "weeks"},
+      "importance": "critical",
+      "difficulty": "beginner",
+      "resources": [
+        {"title": "Resource Name", "url": "https://real-url.com", "resourceType": "documentation", "description": "Brief description"}
+      ],
+      "children": [
+        {
+          "title": "Subtopic",
+          "description": "Specific skill description",
+          "nodeType": "skill",
+          "estimatedDuration": {"value": 3, "unit": "days"},
+          "resources": [{"title": "Guide", "url": "https://real-url.com", "resourceType": "article", "description": "Description"}],
+          "children": []
+        }
+      ]
+    }
+  ]
+}
+
+REQUIREMENTS:
+1. Create 5-7 main nodes covering the complete learning path
+2. Each node should have 2-3 children (subtopics)
+3. Include 2-4 resources per node with REAL URLs from:
+   - MDN Web Docs (developer.mozilla.org)
+   - Official docs (react.dev, nodejs.org, python.org, etc.)
+   - YouTube (Traversy Media, Fireship, freeCodeCamp, Web Dev Simplified)
+   - freeCodeCamp, Codecademy, Scrimba, The Odin Project
+4. Progress from basics to advanced
+5. Include at least one "project" type node
+6. Use importance: "critical", "high", or "medium"
+7. Resource types: documentation, video, course, article, tool, book
+8. Output ONLY valid JSON, no markdown or explanations`;
 }
 
 export async function generateRoadmap(options: GenerateRoadmapOptions) {
@@ -226,79 +380,53 @@ export async function generateRoadmap(options: GenerateRoadmapOptions) {
       console.warn("Exact match search failed, continuing:", searchError);
     }
 
-    // STEP 2: Search for similar roadmaps - SKIP for speed
-    // Similar search takes time, skip to direct generation
-    
-    // STEP 3: Generate new roadmap with AI (FAST MODE)
-    emitProgress(userSocketId, "generating", 25, "Creating roadmap...");
+    // STEP 2: Generate new roadmap with AI
+    emitProgress(userSocketId, "generating", 25, "Creating roadmap with AI...");
 
-    // Improved prompt for BETTER quality with resources
-    const analysisPrompt = `Create a comprehensive learning roadmap for: "${userPrompt}"
-
-Return JSON:
-{
-  "title": "Clear descriptive title for ${userPrompt}",
-  "description": "2-3 sentence overview of what learner will achieve",
-  "category": "one of: ${validCategories.slice(0, 8).join(', ')}",
-  "difficulty": "beginner or intermediate or advanced",
-  "estimatedDuration": {"value": 8, "unit": "weeks"},
-  "nodes": [
-    {
-      "title": "Topic Name",
-      "description": "What learner will learn in this topic",
-      "nodeType": "topic",
-      "estimatedDuration": {"value": 1, "unit": "weeks"},
-      "importance": "critical or high or medium",
-      "difficulty": "beginner",
-      "resources": [
-        {"title": "Official Documentation", "url": "https://docs.example.com", "resourceType": "documentation", "description": "Start here"},
-        {"title": "Video Tutorial", "url": "https://youtube.com/watch?v=example", "resourceType": "video", "description": "Visual learning"},
-        {"title": "Practice Course", "url": "https://example.com/course", "resourceType": "course", "description": "Hands-on practice"}
-      ],
-      "children": [
-        {
-          "title": "Subtopic",
-          "description": "Specific skill within the topic",
-          "nodeType": "skill",
-          "estimatedDuration": {"value": 2, "unit": "days"},
-          "resources": [{"title": "Guide", "url": "https://example.com", "resourceType": "article", "description": "Learn this skill"}],
-          "children": []
-        }
-      ]
-    }
-  ]
-}
-
-Requirements:
-- Create 5-7 main nodes covering the complete learning path
-- Each main node should have 2-3 children (subtopics)
-- Include 3-4 resources per main node (mix of documentation, videos, courses, articles)
-- Use REAL working URLs from popular sites (MDN, YouTube, freeCodeCamp, official docs, etc.)
-- Progress from fundamentals to advanced topics
-- Mark foundational topics as "critical" importance
-- Include at least one "project" type node for hands-on practice
-- Resource types: documentation, video, course, article, tool, book
-- JSON only, no markdown or explanations`;
+    // Build the prompt using the helper functions (defined at module level)
+    const analysisPrompt = buildAIPrompt(userPrompt);
 
     let aiResponse: AIRoadmapResponse;
 
     try {
-      emitProgress(userSocketId, "generating", 40, "Creating with AI...");
+      emitProgress(userSocketId, "generating", 40, "Generating with AI...");
 
-      // Use gpt-3.5-turbo for FAST generation (much faster than gpt-4)
-      const completion = await openai.chat.completions.create({
-        model: "gpt-3.5-turbo-0125", // Latest fast model with better quality
-        messages: [
-          { 
-            role: "system", 
-            content: "You are an expert educator creating comprehensive learning roadmaps. Include real, working resource URLs from popular learning platforms. Output valid JSON only." 
-          },
-          { role: "user", content: analysisPrompt }
-        ],
-        temperature: 0.7,
-        max_tokens: 3500, // Increased for more resources
-        response_format: { type: "json_object" },
-      } as any);
+      // Try GPT-4o-mini first (fast + quality), fallback to gpt-4-turbo, then gpt-3.5-turbo
+      let completion;
+      const models = ["gpt-4o-mini", "gpt-4-turbo", "gpt-3.5-turbo"];
+      let lastError: any = null;
+
+      for (const model of models) {
+        try {
+          console.log(`Trying model: ${model}`);
+          completion = await openai.chat.completions.create({
+            model: model,
+            messages: [
+              { 
+                role: "system", 
+                content: `You are an expert educator creating learning roadmaps. Include REAL resource URLs from MDN, YouTube (Traversy Media, freeCodeCamp), react.dev, nodejs.org, python.org, etc. Output ONLY valid JSON, no markdown.` 
+              },
+              { role: "user", content: analysisPrompt }
+            ],
+            temperature: 0.7,
+            max_tokens: 4000,
+            response_format: { type: "json_object" },
+          });
+          console.log(`Success with model: ${model}`);
+          break; // Success, exit loop
+        } catch (modelError: any) {
+          console.warn(`Model ${model} failed:`, modelError.message);
+          lastError = modelError;
+          if (model === models[models.length - 1]) {
+            throw lastError; // All models failed
+          }
+          emitProgress(userSocketId, "generating", 45, `Trying alternative model...`);
+        }
+      }
+
+      if (!completion) {
+        throw new Error("All AI models failed");
+      }
 
       emitProgress(userSocketId, "structuring", 60, "Processing response...");
 
@@ -312,13 +440,13 @@ Requirements:
       try {
         aiResponse = JSON.parse(content) as AIRoadmapResponse;
       } catch (parseError) {
-        console.error("JSON parse error, content:", content.substring(0, 200));
+        console.error("JSON parse error, content:", content.substring(0, 500));
         throw new Error("AI returned invalid JSON format");
       }
 
       // Validate required fields
       if (!aiResponse.title || !aiResponse.nodes) {
-        throw new Error("Invalid roadmap structure");
+        throw new Error("Invalid roadmap structure - missing title or nodes");
       }
 
       if (!Array.isArray(aiResponse.nodes) || aiResponse.nodes.length === 0) {
@@ -328,6 +456,10 @@ Requirements:
       // Normalize and validate
       aiResponse.category = validateCategory(aiResponse.category || "other");
       aiResponse.difficulty = aiResponse.difficulty || "beginner";
+      aiResponse.estimatedDuration = {
+        value: aiResponse.estimatedDuration?.value || 8,
+        unit: aiResponse.estimatedDuration?.unit || "weeks",
+      };
       
       if (!validDifficulties.includes(aiResponse.difficulty)) {
         aiResponse.difficulty = "beginner";
@@ -338,45 +470,26 @@ Requirements:
       emitProgress(userSocketId, "saving", 75, "Saving roadmap...");
 
     } catch (error: any) {
-      const errorMessage = error.message || "Failed to generate";
-      console.error("AI Error:", error);
-      
-      // Try with gpt-4-turbo as fallback
-      if (error.status === 404 || errorMessage.includes("model")) {
-        console.log("Trying gpt-4-turbo...");
-        emitProgress(userSocketId, "generating", 45, "Trying alternative...");
-        
-        try {
-          const completion = await openai.chat.completions.create({
-            model: "gpt-4-turbo",
-            messages: [
-              { role: "system", content: "Create learning roadmaps. Output JSON only." },
-              { role: "user", content: analysisPrompt }
-            ],
-            temperature: 0.5,
-            max_tokens: 2000,
-            response_format: { type: "json_object" },
-          } as any);
-          
-          const content = completion.choices[0]?.message?.content?.trim() ?? "";
-          aiResponse = JSON.parse(content) as AIRoadmapResponse;
-          aiResponse.category = validateCategory(aiResponse.category || "other");
-          aiResponse.nodes = validateNodes(aiResponse.nodes);
-        } catch (retryError: any) {
-          emitProgress(userSocketId, "error", 0, `AI Error: ${retryError.message}`);
-          throw new Error(retryError.message || "Failed to generate roadmap");
-        }
-      } else {
-        emitProgress(userSocketId, "error", 0, `AI Analysis Error: ${errorMessage}`);
-        throw new Error(errorMessage);
-      }
+      const errorMessage = error.message || "Failed to generate roadmap";
+      console.error("AI Generation Error:", errorMessage);
+      emitProgress(userSocketId, "error", 0, `Generation failed: ${errorMessage}`);
+      throw new Error(errorMessage);
     }
 
-    emitProgress(userSocketId, "saving", 70, "Saving roadmap to database...");
+    emitProgress(userSocketId, "saving", 80, "Saving roadmap to database...");
 
     // Create the roadmap document
     let roadmapDoc;
     const roadmapTitle = aiResponse.title;
+    
+    // Ensure estimatedDuration has proper defaults
+    const estimatedDuration = {
+      value: aiResponse.estimatedDuration?.value || 8,
+      unit: aiResponse.estimatedDuration?.unit || "weeks"
+    };
+
+    // Get cover image based on category
+    const coverImage = getCoverImage(aiResponse.category);
     
     try {
       roadmapDoc = await Roadmap.create({
@@ -384,7 +497,10 @@ Requirements:
         description: aiResponse.description || "A learning roadmap generated by AI",
         category: aiResponse.category,
         difficulty: aiResponse.difficulty,
+        estimatedDuration,
+        coverImage,
         isPublished: true, // Auto-publish generated roadmaps
+        publishedAt: new Date(),
         isCommunityContributed,
         contributor: userId,
         stats: {
@@ -406,7 +522,10 @@ Requirements:
           description: aiResponse.description || "A learning roadmap generated by AI",
           category: aiResponse.category,
           difficulty: aiResponse.difficulty,
+          estimatedDuration,
+          coverImage,
           isPublished: true,
+          publishedAt: new Date(),
           isCommunityContributed,
           contributor: userId,
           stats: { views: 1, completions: 0, averageRating: 4.5, ratingsCount: 0 },
@@ -583,10 +702,24 @@ function validateNodes(nodes: RoadmapNodeInput[]): RoadmapNodeInput[] {
         .filter(resource => resource && resource.title && resource.url) // Remove invalid resources
         .map(resource => ({
           ...resource,
+          url: normalizeResourceUrl(resource.url),
           resourceType: resource.resourceType && validResourceTypes.includes(resource.resourceType.toLowerCase())
             ? resource.resourceType.toLowerCase()
             : "other"
-        }));
+        }))
+        .filter(resource => resource.url);
+    }
+
+    if (!node.resources || node.resources.length < 2) {
+      const fallback = fallbackResourcesForNode(node.title);
+      node.resources = [...(node.resources || []), ...fallback].slice(0, 4);
+    }
+
+    if (!node.estimatedDuration || node.estimatedDuration.value === undefined || node.estimatedDuration.value === null) {
+      node.estimatedDuration = {
+        value: node.nodeType === "project" ? 2 : 1,
+        unit: "weeks",
+      };
     }
 
     // Validate children recursively
