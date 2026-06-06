@@ -10,7 +10,6 @@ const axiosInstance = axios.create({
   withCredentials: true,
 });
 
-// Add token to Authorization header if it exists in localStorage
 axiosInstance.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem("authToken");
@@ -20,6 +19,17 @@ axiosInstance.interceptors.request.use(
     return config;
   },
   (error) => Promise.reject(error)
+);
+
+// On 401, clear stored token so the next request won't send an expired one
+axiosInstance.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem("authToken");
+    }
+    return Promise.reject(error);
+  }
 );
 
 export default axiosInstance;

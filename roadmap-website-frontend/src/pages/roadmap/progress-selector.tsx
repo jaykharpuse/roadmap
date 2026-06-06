@@ -72,7 +72,7 @@ export function ProgressSelector({ currentStatus, onStatusChange, disabled = fal
           <ChevronDown className="h-3 w-3 ml-2" />
         </Button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end" className="w-40 bg-[#1E293B] border-[#334155]">
+      <DropdownMenuContent align="end" className="w-40 bg-card border-border">
         {Object.entries(statusConfig).map(([status, config]) => {
           const Icon = config.icon
           return (
@@ -84,8 +84,8 @@ export function ProgressSelector({ currentStatus, onStatusChange, disabled = fal
               }}
               className={`
                 flex items-center gap-2 cursor-pointer
-                ${config.color} hover:bg-[#0F172A]
-                ${currentStatus === status ? "bg-[#0F172A]" : ""}
+                ${config.color} hover:bg-foreground/[0.06]
+                ${currentStatus === status ? "bg-foreground/[0.06]" : ""}
               `}
             >
               <Icon className="h-4 w-4" />

@@ -173,8 +173,7 @@ export const registerUser = catchAsync(
       res.status(201).json({
         success: true,
         message:
-          "User registered successfully ,please verify your account first",
-        code: verifyCode,
+          "User registered successfully, please verify your account first",
       });
     } catch (error: any) {
       return next(new Errorhandler(500, "Internal server Error "));

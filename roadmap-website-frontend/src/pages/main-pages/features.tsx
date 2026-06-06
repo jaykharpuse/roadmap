@@ -1,137 +1,138 @@
 import { motion } from "framer-motion";
-import { Network, FileText, Plus, BookOpen, TrendingUp } from "lucide-react";
+import { Network, FileText, Plus, BookOpen, TrendingUp, ArrowUpRight } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+
+const cardVariants = {
+  hidden: { opacity: 0, y: 40 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] } },
+};
+
+const features = [
+  {
+    title: "Roadmaps for Every Path",
+    description: "Developers, marketers, students, business professionals — find your structured learning journey.",
+    icon: Network,
+    gradient: "from-orange-500/20 via-rose-500/10 to-transparent",
+    iconColor: "text-orange-400",
+    action: "/roadmaps",
+  },
+  {
+    title: "Cheatsheets & Quick Reference",
+    description: "Summarise complex topics into digestible cheatsheets you can revisit anytime.",
+    icon: FileText,
+    gradient: "from-rose-500/20 via-pink-500/10 to-transparent",
+    iconColor: "text-rose-400",
+    action: "/roadmaps",
+  },
+  {
+    title: "Create Custom Roadmaps",
+    description: "Can't find what you need? Use our AI generator to build a roadmap for any niche topic.",
+    icon: Plus,
+    gradient: "from-violet-500/20 via-purple-500/10 to-transparent",
+    iconColor: "text-violet-400",
+    action: "/generate-roadmap",
+  },
+  {
+    title: "Free Learning Resources",
+    description: "Every roadmap step comes with curated free resources — articles, videos, and courses.",
+    icon: BookOpen,
+    gradient: "from-blue-500/20 via-cyan-500/10 to-transparent",
+    iconColor: "text-blue-400",
+    action: "/roadmaps",
+  },
+  {
+    title: "Trending Technologies",
+    description: "Stay ahead with constantly updated roadmaps for the most in-demand skills of today.",
+    icon: TrendingUp,
+    gradient: "from-amber-500/20 via-orange-500/10 to-transparent",
+    iconColor: "text-amber-400",
+    action: "/roadmaps",
+  },
+];
 
 export default function FeaturesSection() {
   const navigate = useNavigate();
-  
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.1,
-        delayChildren: 0.2,
-      },
-    },
-  };
-
-  const cardVariants = {
-    hidden: { opacity: 0, y: 40, scale: 0.95 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      scale: 1,
-      transition: { duration: 0.5, ease: "easeOut" },
-    },
-  };
-
-  const features = [
-    {
-      title: "Get Roadmap For Developer, Marketers, Students, Business",
-      icon: Network,
-      action: () => navigate("/roadmaps"),
-      description: "Browse curated learning paths",
-    },
-    {
-      title: "Get Cheatsheets To Summarise Your Learning",
-      icon: FileText,
-      action: () => navigate("/roadmaps"),
-      description: "Quick reference guides",
-    },
-    {
-      title: "Couldn't Find any roadmap on your topic? Create custom Roadmaps",
-      icon: Plus,
-      action: () => navigate("/generate-roadmap"),
-      description: "AI-powered roadmap creation",
-    },
-    {
-      title: "Get Free Resources to learn the concepts listed in the roadmap",
-      icon: BookOpen,
-      action: () => navigate("/roadmaps"),
-      description: "Quality learning resources",
-    },
-    {
-      title: "Get Roadmap of all trending technologies",
-      icon: TrendingUp,
-      action: () => navigate("/roadmaps"),
-      description: "Stay up to date with tech trends",
-    },
-  ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-[#0F172A] to-[#020617] py-20 px-4">
-      <div className="max-w-7xl mx-auto">
+    <section className="relative bg-background py-28 px-5 md:px-8 overflow-hidden">
+
+      {/* Background accent */}
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] rounded-full bg-violet-600/[0.04] blur-[120px]" />
+      </div>
+
+      <div className="relative z-10 max-w-7xl mx-auto">
+
+        {/* Section header */}
         <motion.div
           className="text-center mb-16"
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6 }}
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-60px" }}
+          transition={{ duration: 0.65 }}
         >
-          <h2 className="text-5xl md:text-6xl font-bold text-white mb-2">Features</h2>
-          <p className="text-gray-400 text-lg max-w-xl mx-auto">
-            Explore key features tailored for developers, learners, and business minds.
+          <p className="text-xs font-semibold tracking-widest uppercase text-orange-400/70 mb-4">
+            What You Get
+          </p>
+          <h2
+            className="text-4xl md:text-6xl font-bold text-foreground mb-4"
+            style={{ fontFamily: 'Syne, sans-serif' }}
+          >
+            Everything you need to{" "}
+            <span className="text-gradient-brand">navigate learning.</span>
+          </h2>
+          <p className="text-muted-foreground text-lg max-w-xl mx-auto">
+            Structured paths, curated resources, and AI-powered tools — built for serious learners.
           </p>
         </motion.div>
 
+        {/* Cards grid */}
         <motion.div
-          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6"
-          variants={containerVariants}
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"
           initial="hidden"
-          animate="visible"
+          whileInView="show"
+          viewport={{ once: true, margin: "-60px" }}
+          transition={{ staggerChildren: 0.08 }}
         >
           {features.map((feature, index) => (
             <motion.div
               key={index}
-              className="bg-white/5 backdrop-blur-md h-[420px] rounded-2xl p-6 border border-white/10 hover:border-blue-400 transition-all duration-300 group cursor-pointer shadow-md hover:shadow-blue-500/10"
               variants={cardVariants}
-              whileHover={{ scale: 1.015 }}
+              whileHover={{ y: -5, scale: 1.01 }}
               whileTap={{ scale: 0.98 }}
-              onClick={feature.action}
+              onClick={() => navigate(feature.action)}
+              className="group relative glass card-gradient-border rounded-2xl p-7 cursor-pointer overflow-hidden"
             >
-              <div className="flex flex-col h-full">
-                <div className="mb-5">
-                  <div className="w-14 h-14 rounded-xl bg-white/10 flex items-center justify-center transition-colors duration-300 group-hover:bg-blue-500">
-                    <feature.icon className="w-7 h-7 text-blue-400 group-hover:text-white transition duration-300" />
-                  </div>
+              {/* Card inner glow on hover */}
+              <div className={`absolute inset-0 bg-gradient-to-br ${feature.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500 rounded-2xl`} />
+
+              <div className="relative z-10">
+                {/* Icon */}
+                <div className="w-12 h-12 rounded-xl bg-foreground/[0.06] border border-border flex items-center justify-center mb-5 group-hover:border-orange-500/30 transition-colors duration-300">
+                  <feature.icon className={`w-6 h-6 ${feature.iconColor}`} />
                 </div>
 
-                <h3 className="text-xl font-semibold text-white leading-snug group-hover:text-blue-300 transition-colors duration-300">
+                {/* Text */}
+                <h3
+                  className="text-xl font-semibold text-foreground mb-2.5 leading-snug transition-colors duration-200"
+                  style={{ fontFamily: 'Syne, sans-serif' }}
+                >
                   {feature.title}
                 </h3>
-                
-                <p className="text-gray-400 text-sm mt-2">{feature.description}</p>
+                <p className="text-muted-foreground text-sm leading-relaxed">
+                  {feature.description}
+                </p>
 
-                <div className="mt-auto flex items-center justify-center pt-6">
-                  <motion.div
-                    className="w-full h-28 bg-white/5 rounded-xl flex items-center justify-center relative overflow-hidden group-hover:bg-blue-500/10 transition-colors"
-                    whileHover={{ scale: 1.03 }}
-                    transition={{ duration: 0.4 }}
-                  >
-                    <motion.div
-                      className="w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center"
-                      animate={{
-                        rotate: [0, 6, -6, 0],
-                        scale: [1, 1.03, 1],
-                      }}
-                      transition={{
-                        duration: 5,
-                        repeat: Infinity,
-                        ease: "easeInOut",
-                      }}
-                    >
-                      <feature.icon className="w-8 h-8 text-white" />
-                    </motion.div>
-                    <span className="absolute bottom-2 text-xs text-blue-400 group-hover:text-blue-300">
-                      Click to explore →
-                    </span>
-                  </motion.div>
+                {/* Arrow hint */}
+                <div className="mt-6 flex items-center gap-1.5 text-xs font-medium text-muted-foreground group-hover:text-orange-400/80 transition-colors duration-300">
+                  <span>Explore</span>
+                  <ArrowUpRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform duration-200" />
                 </div>
               </div>
             </motion.div>
           ))}
         </motion.div>
       </div>
-    </div>
+    </section>
   );
 }

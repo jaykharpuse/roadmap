@@ -1,4 +1,3 @@
-import { Card } from "@/components/ui/card"
 import { ArrowRight } from "lucide-react"
 import axiosInstance from "@/helper/axiosInstance"
 import { useEffect, useState } from "react"
@@ -35,28 +34,27 @@ export function RecentlyViewed() {
   }, [])
 
   return (
-    <Card className="bg-slate-800/50 border-slate-700 p-6">
-      <h2 className="text-xl font-semibold mb-6 text-white">Recently Viewed</h2>
-
-      {loading && <div className="text-slate-400">Loading...</div>}
-
+    <div className="glass rounded-2xl p-6">
+      <h2 className="text-xl font-semibold text-foreground mb-5" style={{ fontFamily: 'Syne, sans-serif' }}>Recently Viewed</h2>
+      {loading && <div className="text-muted-foreground text-sm">Loading...</div>}
       {!loading && items && items.length === 0 && (
-        <div className="text-slate-400">No recently viewed roadmaps.</div>
+        <div className="text-muted-foreground text-sm">No recently viewed roadmaps.</div>
       )}
-
       {!loading && items && items.length > 0 && (
-        <div className="space-y-3">
+        <div className="space-y-1">
           {items.map((it) => (
-            <Link key={it._id} to={`/details/${it.roadmap._id}`} className="flex items-center gap-3 hover:bg-slate-700/30 rounded-md p-2">
-              <ArrowRight className="w-4 h-4 text-cyan-400" />
-              <div>
-                <div className="font-medium text-white">{it.roadmap.title}</div>
-                <div className="text-sm text-slate-400">{it.roadmap.category}</div>
+            <Link key={it._id} to={`/details/${it.roadmap._id}`}
+              className="flex items-center gap-3 p-3 rounded-xl hover:bg-foreground/[0.04] group transition-colors"
+            >
+              <ArrowRight className="w-4 h-4 text-orange-400 flex-shrink-0 group-hover:translate-x-0.5 transition-transform" />
+              <div className="min-w-0">
+                <div className="text-sm font-medium text-foreground group-hover:text-orange-400 transition-colors truncate">{it.roadmap.title}</div>
+                <div className="text-xs text-muted-foreground capitalize">{it.roadmap.category}</div>
               </div>
             </Link>
           ))}
         </div>
       )}
-    </Card>
+    </div>
   )
 }

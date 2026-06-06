@@ -1,6 +1,6 @@
-import { Card } from "@/components/ui/card"
+
 import { Badge } from "@/components/ui/badge"
-import { Star, Users, Eye, Trophy } from "lucide-react"
+import { Star, Eye } from "lucide-react"
 import { Link } from "react-router-dom"
 import { useEffect } from "react"
 import { useAppDispatch, useAppSelector } from "@/hooks/useAppDispatch"
@@ -16,64 +16,46 @@ export function BookmarkedRoadmaps() {
     if (user) dispatch(fetchBookmarks())
   }, [user, dispatch])
 
-  if (loading) return <p className="text-slate-400">Loading bookmarks...</p>
+  if (loading) return <p className="text-muted-foreground text-sm">Loading bookmarks...</p>
 
   if (!bookmarks || bookmarks.length === 0) {
-    return <p className="text-slate-400">No bookmarked roadmaps yet.</p>
+    return (
+      <div className="glass rounded-2xl p-6 text-center">
+        <p className="text-muted-foreground text-sm">No bookmarked roadmaps yet.</p>
+      </div>
+    )
   }
 
   return (
-    <Card className="bg-slate-800/50 border-slate-700 p-6 space-y-6">
-      <h2 className="text-xl font-semibold mb-6 text-white">Bookmarked Roadmaps</h2>
-
+    <div className="glass rounded-2xl p-6 space-y-1">
+      <h2 className="text-xl font-semibold text-foreground mb-5" style={{ fontFamily: 'Syne, sans-serif' }}>Bookmarked Roadmaps</h2>
       {bookmarks.map((bookmark) => {
         const roadmap: any = typeof bookmark.roadmap === "string" ? { _id: bookmark.roadmap } : bookmark.roadmap
         return (
           <Link
             key={bookmark._id}
             to={`/details/${roadmap._id}`}
-            className="block hover:bg-slate-700/30 rounded-lg p-4 transition-colors"
+            className="block hover:bg-foreground/[0.04] rounded-xl p-4 transition-colors group"
           >
-            <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-2">
-              {/* Left Section */}
-              <div className="flex-1">
-                <h3 className="text-lg font-medium text-white">{roadmap.title || "Untitled Roadmap"}</h3>
-                <p className="text-sm text-slate-400">{roadmap.description || ""}</p>
-                <div className="flex items-center gap-2 mt-1 flex-wrap">
-                  <Badge variant="secondary" className="capitalize">{roadmap.category || "other"}</Badge>
-                  <Badge variant="outline" className="text-xs bg-slate-700/50 text-slate-200 border-slate-600 capitalize">
-                    {roadmap.difficulty || "unknown"}
-                  </Badge>
-                  {bookmark.isFavorite && (
-                    <Badge className="bg-yellow-500/20 text-yellow-400 border-yellow-500/30 text-xs">
-                      Favorite
-                    </Badge>
-                  )}
+            <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-2">
+              <div className="flex-1 min-w-0">
+                <h3 className="text-base font-medium text-foreground group-hover:text-orange-400 transition-colors">{roadmap.title || "Untitled Roadmap"}</h3>
+                <p className="text-sm text-muted-foreground line-clamp-1">{roadmap.description || ""}</p>
+                <div className="flex items-center gap-2 mt-2 flex-wrap">
+                  <Badge variant="secondary" className="capitalize text-xs">{roadmap.category || "other"}</Badge>
+                  <Badge variant="outline" className="text-xs capitalize">{roadmap.difficulty || "unknown"}</Badge>
+                  {bookmark.isFavorite && <Badge className="bg-amber-500/15 text-amber-400 border-amber-500/25 text-xs">Favorite</Badge>}
                 </div>
-                {bookmark.notes && (
-                  <p className="text-sm text-slate-400 mt-1 italic">"{bookmark.notes}"</p>
-                )}
+                {bookmark.notes && <p className="text-xs text-muted-foreground mt-1.5 italic">"{bookmark.notes}"</p>}
               </div>
-
-              {/* Right Section - Stats */}
-              <div className="flex gap-4 mt-2 md:mt-0">
-                <div className="flex items-center gap-1 text-slate-400 text-sm">
-                  <Eye className="h-4 w-4 text-slate-400" /> <span className="text-slate-400">{roadmap.stats?.views ?? 0}</span>
-                </div>
-                <div className="flex items-center gap-1 text-slate-400 text-sm">
-                  <Trophy className="h-4 w-4 text-slate-400" /> <span className="text-slate-400">{roadmap.stats?.completions ?? 0}</span>
-                </div>
-                <div className="flex items-center gap-1 text-slate-400 text-sm">
-                  <Star className="h-4 w-4 text-slate-400" /> <span className="text-slate-400">{(roadmap.stats?.averageRating ?? 0).toFixed(1)}</span>
-                </div>
-                <div className="flex items-center gap-1 text-slate-400 text-sm">
-                  <Users className="h-4 w-4 text-slate-400" /> <span className="text-slate-400">{roadmap.stats?.ratingsCount ?? 0}</span>
-                </div>
+              <div className="flex gap-3 text-xs text-muted-foreground mt-1 md:mt-0 flex-shrink-0">
+                <span className="flex items-center gap-1"><Eye className="h-3.5 w-3.5" />{roadmap.stats?.views ?? 0}</span>
+                <span className="flex items-center gap-1"><Star className="h-3.5 w-3.5 text-amber-400" />{(roadmap.stats?.averageRating ?? 0).toFixed(1)}</span>
               </div>
             </div>
           </Link>
         )
       })}
-    </Card>
+    </div>
   )
 }

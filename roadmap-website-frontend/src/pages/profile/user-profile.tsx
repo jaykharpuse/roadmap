@@ -1,28 +1,17 @@
 import React, { useState, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/authContext";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
-  User,
-  Mail,
-  Calendar,
-  Shield,
-  CheckCircle,
-  XCircle,
-  Settings,
-  BookOpen,
-  TrendingUp,
-  Bookmark,
-  Clock,
-  Award,
+  User, Mail, Calendar, Shield, CheckCircle, XCircle,
+  Settings, BookOpen, TrendingUp, Bookmark, Clock, Award, Edit2, X, Save,
 } from "lucide-react";
 import LogoutButton from "@/components/LogoutButton";
 import axiosInstance from "@/helper/axiosInstance";
 import { toast } from "sonner";
+import { motion } from "framer-motion";
 
 const UserProfile: React.FC = () => {
   const { user, isLoading, isAuthenticated, refreshUser } = useAuth();
@@ -36,13 +25,13 @@ const UserProfile: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#0F172A] to-[#020617] py-12">
-        <div className="container mx-auto px-4 max-w-4xl">
-          <div className="space-y-6">
-            <Skeleton className="h-64 w-full bg-[#1E293B]" />
-            <Skeleton className="h-48 w-full bg-[#1E293B]" />
-            <Skeleton className="h-32 w-full bg-[#1E293B]" />
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="w-full max-w-4xl mx-auto px-5 py-12 space-y-5">
+          <Skeleton className="h-48 w-full rounded-2xl bg-foreground/[0.06]" />
+          <div className="grid grid-cols-4 gap-4">
+            {[1,2,3,4].map(i => <Skeleton key={i} className="h-24 rounded-2xl bg-foreground/[0.06]" />)}
           </div>
+          <Skeleton className="h-64 w-full rounded-2xl bg-foreground/[0.06]" />
         </div>
       </div>
     );
@@ -50,57 +39,36 @@ const UserProfile: React.FC = () => {
 
   if (!isAuthenticated || !user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#0F172A] to-[#020617] flex items-center justify-center">
-        <Card className="bg-[#1E293B] border-[#334155] max-w-md w-full mx-4">
-          <CardContent className="p-8 text-center">
-            <User className="w-16 h-16 text-[#60A5FA] mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-[#E2E8F0] mb-2">
-              Not Logged In
-            </h2>
-            <p className="text-[#94A3B8] mb-6">
-              Please login to view your profile
-            </p>
-            <Button
-              onClick={() => navigate("/login", { state: { from: location } })}
-              className="bg-[#3B82F6] hover:bg-[#2563EB] text-white"
-            >
-              Go to Login
-            </Button>
-          </CardContent>
-        </Card>
+      <div className="min-h-screen bg-background flex items-center justify-center px-5">
+        <div className="glass-strong rounded-2xl p-8 max-w-sm w-full text-center">
+          <User className="w-12 h-12 text-orange-400 mx-auto mb-4" />
+          <h2 className="text-xl font-bold text-foreground mb-2" style={{ fontFamily: 'Syne, sans-serif' }}>Not Logged In</h2>
+          <p className="text-muted-foreground text-sm mb-5">Please sign in to view your profile</p>
+          <button
+            onClick={() => navigate("/login", { state: { from: location } })}
+            className="w-full py-2.5 text-sm font-semibold rounded-xl bg-gradient-to-r from-orange-500 via-rose-500 to-violet-600 text-white"
+          >
+            Go to Login
+          </button>
+        </div>
       </div>
     );
   }
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return Number.isNaN(date.getTime()) ? "N/A" : date.toLocaleDateString("en-US", {
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
+  const formatDate = (d: string) => {
+    const date = new Date(d);
+    return isNaN(date.getTime()) ? "N/A" : date.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" });
   };
 
-  const getRoleBadgeColor = (role: string) => {
+  const roleColor = (role: string) => {
     switch (role) {
-      case "admin":
-        return "bg-red-500/20 text-red-400 border-red-500/30";
-      case "instructor":
-        return "bg-purple-500/20 text-purple-400 border-purple-500/30";
-      default:
-        return "bg-[#60A5FA]/20 text-[#60A5FA] border-[#60A5FA]/30";
+      case "admin":      return "bg-red-500/15 text-red-400 border-red-500/25";
+      case "instructor": return "bg-violet-500/15 text-violet-400 border-violet-500/25";
+      default:           return "bg-orange-500/15 text-orange-400 border-orange-500/25";
     }
   };
 
-  const startEdit = () => {
-    setUsernameInput(user?.username || "");
-    setEmailInput(user?.email || "");
-    setIsEditing(true);
-  };
-
-  const cancelEdit = () => {
-    setIsEditing(false);
-  };
+  const startEdit = () => { setUsernameInput(user?.username || ""); setEmailInput(user?.email || ""); setIsEditing(true); };
 
   const handleSave = async () => {
     if (!user) return;
@@ -111,282 +79,209 @@ const UserProfile: React.FC = () => {
       if (emailInput) form.append("email", emailInput);
       const file = fileRef.current?.files?.[0];
       if (file) form.append("profileUrl", file);
-
-      const res = await axiosInstance.put("/user/me", form, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-
-      if (res.data?.success) {
-        toast.success("Profile updated");
-        setIsEditing(false);
-        // refresh auth user
-        await refreshUser();
-      } else {
-        toast.error("Failed to update profile");
-      }
+      const res = await axiosInstance.put("/user/me", form, { headers: { "Content-Type": "multipart/form-data" } });
+      if (res.data?.success) { toast.success("Profile updated"); setIsEditing(false); await refreshUser(); }
+      else toast.error("Failed to update profile");
     } catch (err: any) {
       toast.error(err?.response?.data?.message || "Failed to update profile");
-    } finally {
-      setSaving(false);
-    }
+    } finally { setSaving(false); }
   };
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0F172A] to-[#020617] py-12">
-      <div className="container mx-auto px-4 max-w-4xl">
-        {/* Profile Header */}
-        <Card className="bg-[#1E293B] border-[#334155] overflow-hidden mb-6">
-          {/* Cover Image / Gradient */}
-          <div className="h-32 bg-gradient-to-r from-[#3B82F6] via-[#8B5CF6] to-[#EC4899]" />
 
-          <CardContent className="relative px-6 pb-6">
+  const quickActions = [
+    { icon: TrendingUp, label: "Progress", sub: "Dashboard", path: "/progress", color: "text-orange-400", bg: "bg-orange-500/10" },
+    { icon: BookOpen,   label: "Browse",   sub: "Roadmaps",  path: "/roadmaps",  color: "text-violet-400", bg: "bg-violet-500/10" },
+    { icon: Bookmark,   label: "Explore",  sub: "Resources", path: "/resources", color: "text-rose-400",   bg: "bg-rose-500/10" },
+    { icon: Award,      label: "Status",   sub: user.isVerified ? "Verified" : "Unverified", path: "", color: "text-amber-400", bg: "bg-amber-500/10" },
+  ];
+
+  const infoFields = [
+    { icon: User,          label: "Username",     value: user.username },
+    { icon: Mail,          label: "Email",        value: user.email },
+    { icon: Shield,        label: "Role",         value: user.Role,      className: "capitalize" },
+    { icon: user.isVerified ? CheckCircle : XCircle, label: "Verification", value: user.isVerified ? "Verified" : "Not Verified", iconClass: user.isVerified ? "text-green-400" : "text-amber-400" },
+    { icon: Calendar,      label: "Member Since", value: formatDate(user.createdAt) },
+    { icon: Clock,         label: "Last Updated", value: formatDate(user.updatedAt) },
+  ];
+
+  return (
+    <div className="min-h-screen bg-background">
+      <div className="pointer-events-none fixed inset-0 overflow-hidden -z-10">
+        <div className="absolute top-0 right-0 w-[500px] h-[400px] rounded-full bg-violet-600/[0.04] blur-[110px]" />
+        <div className="absolute bottom-0 left-0 w-[400px] h-[400px] rounded-full bg-orange-500/[0.03] blur-[100px]" />
+      </div>
+
+      <div className="max-w-4xl mx-auto px-5 md:px-8 py-10 space-y-5">
+
+        {/* Profile Header Card */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="glass rounded-2xl overflow-hidden"
+        >
+          {/* Cover */}
+          <div className="h-28 bg-gradient-to-r from-orange-500/30 via-rose-500/20 to-violet-600/30 relative">
+            <div className="absolute inset-0 bg-gradient-brand opacity-20" />
+          </div>
+
+          <div className="px-6 pb-6 relative">
             {/* Avatar */}
-            <div className="absolute -top-16 left-6">
-              <Avatar className="w-32 h-32 border-4 border-[#1E293B] shadow-xl">
-                <AvatarImage
-                  src={user.profileUrl || undefined}
-                  alt={user.username}
-                  className="object-cover"
-                />
-                <AvatarFallback className="bg-[#3B82F6] text-white text-4xl font-bold">
+            <div className="absolute -top-12 left-6">
+              <Avatar className="w-24 h-24 border-4 border-card shadow-xl">
+                <AvatarImage src={user.profileUrl || undefined} alt={user.username} className="object-cover" />
+                <AvatarFallback className="bg-gradient-to-br from-orange-400 to-violet-500 text-white text-3xl font-bold">
                   {user.username?.charAt(0).toUpperCase()}
                 </AvatarFallback>
               </Avatar>
             </div>
 
-            {/* Profile Info */}
-            <div className="pt-20">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div>
-                  <div className="flex items-center gap-3 mb-2">
-                    <h1 className="text-3xl font-bold text-[#E2E8F0]">
-                      {user.username}
-                    </h1>
-                    {user.isVerified ? (
-                      <CheckCircle className="w-6 h-6 text-green-400" />
-                    ) : (
-                      <XCircle className="w-6 h-6 text-yellow-400" />
-                    )}
-                  </div>
-                  <p className="text-[#94A3B8] flex items-center gap-2">
-                    <Mail className="w-4 h-4" />
-                    {user.email}
-                  </p>
+            <div className="pt-14 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <h1 className="text-2xl font-bold text-foreground" style={{ fontFamily: 'Syne, sans-serif' }}>{user.username}</h1>
+                  {user.isVerified
+                    ? <CheckCircle className="w-5 h-5 text-green-400" />
+                    : <XCircle className="w-5 h-5 text-amber-400" />
+                  }
                 </div>
-
-                <div className="flex gap-3">
-                  <Badge
-                    variant="outline"
-                    className={`${getRoleBadgeColor(user.Role)} capitalize px-4 py-2 text-sm font-medium`}
-                  >
-                    <Shield className="w-4 h-4 mr-2" />
-                    {user.Role}
-                  </Badge>
-                </div>
+                <p className="text-sm text-muted-foreground flex items-center gap-1.5">
+                  <Mail className="w-3.5 h-3.5" />{user.email}
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge className={`${roleColor(user.Role)} capitalize border text-xs px-3 py-1`}>
+                  <Shield className="w-3 h-3 mr-1.5" />{user.Role}
+                </Badge>
+                <button
+                  onClick={startEdit}
+                  className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg glass border border-border text-foreground hover:bg-foreground/[0.06] transition-colors"
+                >
+                  <Edit2 className="w-3 h-3" /> Edit
+                </button>
               </div>
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </motion.div>
 
         {/* Quick Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-          <Card
-            className="bg-[#1E293B] border-[#334155] cursor-pointer hover:border-[#60A5FA]/50 transition-all"
-            onClick={() => navigate("/progress")}
-          >
-            <CardContent className="p-4 text-center">
-              <TrendingUp className="w-8 h-8 text-[#60A5FA] mx-auto mb-2" />
-              <p className="text-sm text-[#94A3B8]">Progress</p>
-              <p className="text-lg font-semibold text-[#E2E8F0]">Dashboard</p>
-            </CardContent>
-          </Card>
-
-          <Card
-            className="bg-[#1E293B] border-[#334155] cursor-pointer hover:border-[#60A5FA]/50 transition-all"
-            onClick={() => navigate("/roadmaps")}
-          >
-            <CardContent className="p-4 text-center">
-              <BookOpen className="w-8 h-8 text-green-400 mx-auto mb-2" />
-              <p className="text-sm text-[#94A3B8]">Browse</p>
-              <p className="text-lg font-semibold text-[#E2E8F0]">Roadmaps</p>
-            </CardContent>
-          </Card>
-
-          <Card
-            className="bg-[#1E293B] border-[#334155] cursor-pointer hover:border-[#60A5FA]/50 transition-all"
-            onClick={() => navigate("/resources")}
-          >
-            <CardContent className="p-4 text-center">
-              <Bookmark className="w-8 h-8 text-purple-400 mx-auto mb-2" />
-              <p className="text-sm text-[#94A3B8]">Explore</p>
-              <p className="text-lg font-semibold text-[#E2E8F0]">Resources</p>
-            </CardContent>
-          </Card>
-
-          <Card className="bg-[#1E293B] border-[#334155]">
-            <CardContent className="p-4 text-center">
-              <Award className="w-8 h-8 text-yellow-400 mx-auto mb-2" />
-              <p className="text-sm text-[#94A3B8]">Status</p>
-              <p className="text-lg font-semibold text-[#E2E8F0]">
-                {user.isVerified ? "Verified" : "Unverified"}
-              </p>
-            </CardContent>
-          </Card>
-        </div>
+        <motion.div
+          className="grid grid-cols-2 md:grid-cols-4 gap-4"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.08 }}
+        >
+          {quickActions.map((a, i) => (
+            <div
+              key={i}
+              onClick={() => a.path && navigate(a.path)}
+              className={`glass card-gradient-border rounded-2xl p-5 text-center ${a.path ? "cursor-pointer hover:shadow-lg transition-all duration-200" : ""}`}
+            >
+              <div className={`w-10 h-10 rounded-xl ${a.bg} flex items-center justify-center mx-auto mb-3`}>
+                <a.icon className={`w-5 h-5 ${a.color}`} />
+              </div>
+              <p className="text-xs text-muted-foreground">{a.label}</p>
+              <p className="text-sm font-semibold text-foreground" style={{ fontFamily: 'Syne, sans-serif' }}>{a.sub}</p>
+            </div>
+          ))}
+        </motion.div>
 
         {/* Account Details */}
-        <Card className="bg-[#1E293B] border-[#334155] mb-6">
-          <CardHeader>
-            <CardTitle className="text-[#E2E8F0] flex items-center gap-2">
-              <User className="w-5 h-5 text-[#60A5FA]" />
-              Account Details
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="flex items-center gap-3 p-4 rounded-lg bg-[#0F172A] border border-[#334155]">
-                <User className="w-5 h-5 text-[#60A5FA]" />
-                <div>
-                  <p className="text-xs text-[#94A3B8]">Username</p>
-                  <p className="text-[#E2E8F0] font-medium">{user.username}</p>
+        <motion.div
+          className="glass rounded-2xl p-6"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.14 }}
+        >
+          <h2 className="text-lg font-semibold text-foreground mb-5 flex items-center gap-2" style={{ fontFamily: 'Syne, sans-serif' }}>
+            <User className="w-4 h-4 text-orange-400" /> Account Details
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            {infoFields.map((field, i) => (
+              <div key={i} className="flex items-center gap-3 p-4 rounded-xl bg-foreground/[0.03] border border-border">
+                <field.icon className={`w-4 h-4 flex-shrink-0 ${(field as any).iconClass || "text-orange-400"}`} />
+                <div className="min-w-0">
+                  <p className="text-xs text-muted-foreground">{field.label}</p>
+                  <p className={`text-sm font-medium text-foreground ${(field as any).className || ""} truncate`}>{field.value}</p>
                 </div>
               </div>
+            ))}
+          </div>
+        </motion.div>
 
-              <div className="flex items-center gap-3 p-4 rounded-lg bg-[#0F172A] border border-[#334155]">
-                <Mail className="w-5 h-5 text-[#60A5FA]" />
-                <div>
-                  <p className="text-xs text-[#94A3B8]">Email</p>
-                  <p className="text-[#E2E8F0] font-medium">{user.email}</p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 p-4 rounded-lg bg-[#0F172A] border border-[#334155]">
-                <Shield className="w-5 h-5 text-[#60A5FA]" />
-                <div>
-                  <p className="text-xs text-[#94A3B8]">Role</p>
-                  <p className="text-[#E2E8F0] font-medium capitalize">
-                    {user.Role}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 p-4 rounded-lg bg-[#0F172A] border border-[#334155]">
-                {user.isVerified ? (
-                  <CheckCircle className="w-5 h-5 text-green-400" />
-                ) : (
-                  <XCircle className="w-5 h-5 text-yellow-400" />
-                )}
-                <div>
-                  <p className="text-xs text-[#94A3B8]">Verification</p>
-                  <p className="text-[#E2E8F0] font-medium">
-                    {user.isVerified ? "Verified" : "Not Verified"}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 p-4 rounded-lg bg-[#0F172A] border border-[#334155]">
-                <Calendar className="w-5 h-5 text-[#60A5FA]" />
-                <div>
-                  <p className="text-xs text-[#94A3B8]">Member Since</p>
-                  <p className="text-[#E2E8F0] font-medium">
-                    {formatDate(user.createdAt)}
-                  </p>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 p-4 rounded-lg bg-[#0F172A] border border-[#334155]">
-                <Clock className="w-5 h-5 text-[#60A5FA]" />
-                <div>
-                  <p className="text-xs text-[#94A3B8]">Last Updated</p>
-                  <p className="text-[#E2E8F0] font-medium">
-                    {formatDate(user.updatedAt)}
-                  </p>
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
         {/* Edit Form */}
         {isEditing && (
-          <Card className="bg-[#1E293B] border-[#334155] mb-6">
-            <CardHeader>
-              <CardTitle className="text-[#E2E8F0]">Edit Profile</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 gap-4">
-                <div>
-                  <label className="text-xs text-[#94A3B8]">Username</label>
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="glass rounded-2xl p-6"
+          >
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-lg font-semibold text-foreground" style={{ fontFamily: 'Syne, sans-serif' }}>Edit Profile</h2>
+              <button onClick={() => setIsEditing(false)} className="p-1.5 rounded-lg hover:bg-foreground/[0.06] text-muted-foreground">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="grid grid-cols-1 gap-4">
+              {[
+                { label: "Username", value: usernameInput, onChange: setUsernameInput },
+                { label: "Email",    value: emailInput,    onChange: setEmailInput },
+              ].map((f, i) => (
+                <div key={i}>
+                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider block mb-1.5">{f.label}</label>
                   <input
-                    value={usernameInput}
-                    onChange={(e) => setUsernameInput(e.target.value)}
-                    className="w-full mt-1 p-3 rounded bg-[#0F172A] border border-[#334155] text-[#E2E8F0]"
+                    value={f.value}
+                    onChange={(e) => f.onChange(e.target.value)}
+                    className="w-full h-11 px-4 rounded-xl bg-foreground/[0.04] border border-border text-foreground text-sm focus:outline-none focus:border-orange-500/40 focus:ring-1 focus:ring-orange-500/20"
                   />
                 </div>
-                <div>
-                  <label className="text-xs text-[#94A3B8]">Email</label>
-                  <input
-                    value={emailInput}
-                    onChange={(e) => setEmailInput(e.target.value)}
-                    className="w-full mt-1 p-3 rounded bg-[#0F172A] border border-[#334155] text-[#E2E8F0]"
-                  />
-                </div>
-                <div>
-                  <label className="text-xs text-[#94A3B8]">Profile Image</label>
-                  <input ref={fileRef} type="file" accept="image/*" className="w-full mt-1 text-sm text-[#E2E8F0]" />
-                </div>
-                <div className="flex gap-3">
-                  <Button onClick={handleSave} disabled={saving}>
-                    {saving ? "Saving..." : "Save"}
-                  </Button>
-                  <Button variant="outline" onClick={cancelEdit}>
-                    Cancel
-                  </Button>
-                </div>
+              ))}
+              <div>
+                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wider block mb-1.5">Profile Image</label>
+                <input ref={fileRef} type="file" accept="image/*" className="w-full text-sm text-muted-foreground file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-xs file:font-medium file:bg-orange-500/10 file:text-orange-400 hover:file:bg-orange-500/20" />
               </div>
-            </CardContent>
-          </Card>
+              <div className="flex gap-3 pt-1">
+                <button
+                  onClick={handleSave}
+                  disabled={saving}
+                  className="flex items-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-xl bg-gradient-to-r from-orange-500 via-rose-500 to-violet-600 text-white disabled:opacity-60"
+                >
+                  <Save className="w-4 h-4" /> {saving ? "Saving..." : "Save Changes"}
+                </button>
+                <button onClick={() => setIsEditing(false)} className="px-5 py-2.5 text-sm font-medium rounded-xl glass border border-border text-foreground hover:bg-foreground/[0.06]">
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </motion.div>
         )}
 
         {/* Actions */}
-        <Card className="bg-[#1E293B] border-[#334155]">
-          <CardHeader>
-            <CardTitle className="text-[#E2E8F0] flex items-center gap-2">
-              <Settings className="w-5 h-5 text-[#60A5FA]" />
-              Quick Actions
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-wrap gap-3">
-              <Button
-                variant="outline"
-                className="bg-[#0F172A] text-[#E2E8F0] border-[#334155] hover:bg-[#1E293B] hover:border-[#60A5FA]/50"
-                onClick={() => navigate("/progress")}
+        <motion.div
+          className="glass rounded-2xl p-6"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.18 }}
+        >
+          <h2 className="text-lg font-semibold text-foreground mb-4 flex items-center gap-2" style={{ fontFamily: 'Syne, sans-serif' }}>
+            <Settings className="w-4 h-4 text-orange-400" /> Quick Actions
+          </h2>
+          <div className="flex flex-wrap gap-3">
+            {[
+              { label: "View Progress",    icon: TrendingUp, path: "/progress" },
+              { label: "Generate Roadmap", icon: BookOpen,   path: "/generate-roadmap" },
+              { label: "Browse Resources", icon: Bookmark,   path: "/resources" },
+            ].map((a, i) => (
+              <button
+                key={i}
+                onClick={() => navigate(a.path)}
+                className="flex items-center gap-2 px-4 py-2.5 text-sm font-medium rounded-xl glass border border-border text-foreground hover:bg-foreground/[0.06] hover:border-orange-500/30 hover:text-orange-400 transition-all duration-200"
               >
-                <TrendingUp className="w-4 h-4 mr-2" />
-                View Progress
-              </Button>
-
-              <Button
-                variant="outline"
-                className="bg-[#0F172A] text-[#E2E8F0] border-[#334155] hover:bg-[#1E293B] hover:border-[#60A5FA]/50"
-                onClick={() => navigate("/generate-roadmap")}
-              >
-                <BookOpen className="w-4 h-4 mr-2" />
-                Generate Roadmap
-              </Button>
-
-              <Button
-                variant="outline"
-                className="bg-[#0F172A] text-[#E2E8F0] border-[#334155] hover:bg-[#1E293B] hover:border-[#60A5FA]/50"
-                onClick={startEdit}
-              >
-                <User className="w-4 h-4 mr-2" />
-                Edit Profile
-              </Button>
-
-              <LogoutButton />
-            </div>
-          </CardContent>
-        </Card>
+                <a.icon className="w-4 h-4" /> {a.label}
+              </button>
+            ))}
+            <LogoutButton />
+          </div>
+        </motion.div>
       </div>
     </div>
   );

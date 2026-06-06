@@ -1,37 +1,31 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
-
 interface NotFoundPageProps {
   onGoHome: () => void
 }
 
 export function NotFoundPage({ onGoHome }: NotFoundPageProps) {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex items-center justify-center p-4">
-      <div className="text-center max-w-md w-full">
-        {/* 404 Number */}
-        <div className="text-8xl md:text-9xl font-bold text-transparent bg-gradient-to-r from-blue-400 to-blue-600 bg-clip-text mb-8">
+    <div className="min-h-screen bg-background flex items-center justify-center px-5 relative overflow-hidden">
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[500px] rounded-full bg-orange-500/[0.05] blur-[120px]" />
+        <div className="absolute bottom-0 right-0 w-[400px] h-[400px] rounded-full bg-violet-600/[0.06] blur-[100px]" />
+      </div>
+      <div className="relative z-10 text-center max-w-md w-full">
+        <div className="text-[120px] md:text-[160px] font-bold text-gradient-brand leading-none mb-4" style={{ fontFamily: 'Syne, sans-serif' }}>
           404
         </div>
-
-        {/* Title */}
-        <h1 className="text-3xl md:text-4xl font-bold text-white mb-6">Page Not Found</h1>
-
-        {/* Description */}
-        <p className="text-slate-400 text-lg mb-8 leading-relaxed">
-          The page you are looking for
-          <br />
-          does not exist.
+        <h1 className="text-3xl font-bold text-foreground mb-3" style={{ fontFamily: 'Syne, sans-serif' }}>Page Not Found</h1>
+        <p className="text-muted-foreground mb-8 leading-relaxed">
+          The page you are looking for doesn't exist or has been moved.
         </p>
-
-        {/* Go Home Button */}
-        <Button
+        <button
           onClick={onGoHome}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-3 rounded-full text-lg font-medium transition-colors duration-200"
+          className="inline-flex items-center gap-2 px-7 py-3 text-base font-semibold rounded-xl bg-gradient-to-r from-orange-500 via-rose-500 to-violet-600 text-white shadow-lg shadow-orange-500/20 hover:opacity-90 transition-opacity"
+          style={{ fontFamily: 'Syne, sans-serif' }}
         >
           Go to Homepage
-        </Button>
+        </button>
       </div>
     </div>
   )

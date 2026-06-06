@@ -342,29 +342,29 @@ const GenerateRoadmap: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-[#0F172A] to-[#020617] p-6">
+    <div className="min-h-screen bg-background p-6">
       <div className="max-w-4xl mx-auto space-y-8">
         {/* Header */}
         <motion.div initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="text-center space-y-4">
-          <h1 className="text-4xl font-bold text-[#60A5FA] flex items-center justify-center gap-3">
+          <h1 className="text-4xl font-bold text-orange-400 flex items-center justify-center gap-3">
             <Sparkles className="w-8 h-8" />
             AI Roadmap Generator
           </h1>
-          <p className="text-[#E2E8F0] text-lg">Generate personalized learning roadmaps with AI assistance</p>
+          <p className="text-foreground text-lg">Generate personalized learning roadmaps with AI assistance</p>
         </motion.div>
 
         {/* Input Form */}
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-          <Card className="bg-[#1E293B] border-[#0F172A] shadow-2xl">
+          <Card className="glass border-border shadow-2xl">
             <CardHeader>
-              <CardTitle className="text-[#60A5FA] flex items-center gap-2">
+              <CardTitle className="text-orange-400 flex items-center gap-2">
                 <Zap className="w-5 h-5" />
                 What do you want to learn?
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="prompt" className="text-[#E2E8F0]">
+                <Label htmlFor="prompt" className="text-foreground">
                   Describe your learning goal clearly
                 </Label>
                 <Textarea
@@ -372,11 +372,11 @@ const GenerateRoadmap: React.FC = () => {
                   placeholder="E.g., I want to become a full-stack developer with React and Node.js in 6 months..."
                   value={prompt}
                   onChange={(e) => setPrompt(e.target.value)}
-                  className="bg-[#0F172A] border-[#374151] text-[#E2E8F0] placeholder:text-[#9CA3AF] min-h-[120px] resize-none"
+                  className="bg-background border-border text-foreground placeholder:text-muted-foreground min-h-[120px] resize-none"
                   disabled={isLoading || isRetrying}
                   maxLength={500}
                 />
-                <div className="text-xs text-[#9CA3AF]">
+                <div className="text-xs text-muted-foreground">
                   {prompt.length}/500 characters
                 </div>
               </div>
@@ -385,7 +385,7 @@ const GenerateRoadmap: React.FC = () => {
                 <Button
                   onClick={handleSubmit}
                   disabled={isLoading || isRetrying || !prompt.trim()}
-                  className="flex-1 bg-[#3B82F6] hover:bg-[#2563EB] text-white font-semibold py-3 transition-all duration-200"
+                  className="flex-1 bg-gradient-to-r from-orange-500 via-rose-500 to-violet-600 text-white font-semibold py-3 transition-all duration-200"
                 >
                   {isLoading || isRetrying ? (
                     <>
@@ -403,7 +403,7 @@ const GenerateRoadmap: React.FC = () => {
                   <Button
                     onClick={resetForm}
                     variant="outline"
-                    className="border-[#374151] text-[#E2E8F0] hover:bg-[#1E293B]"
+                    className="border-border text-foreground hover:bg-foreground/[0.06]"
                   >
                     New
                   </Button>
@@ -421,17 +421,17 @@ const GenerateRoadmap: React.FC = () => {
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
             >
-              <Card className="bg-[#EF4444] bg-opacity-10 border border-[#EF4444] shadow-lg">
+              <Card className="bg-red-500/10 border border-red-500/30 shadow-lg">
                 <CardContent className="p-6 space-y-4">
                   <div className="flex gap-3 items-start">
-                    <AlertCircle className="w-6 h-6 text-[#EF4444] flex-shrink-0 mt-0.5" />
+                    <AlertCircle className="w-6 h-6 text-red-400 flex-shrink-0 mt-0.5" />
                     <div className="flex-1 space-y-2">
-                      <h3 className="text-[#EF4444] font-semibold">Generation Failed</h3>
-                      <p className="text-[#E2E8F0] text-sm">
+                      <h3 className="text-red-400 font-semibold">Generation Failed</h3>
+                      <p className="text-foreground text-sm">
                         {getErrorMessage(reduxError || lastGenerationError || generationTimeout ? "timeout" : "")}
                       </p>
                       {generationAttempts > 0 && (
-                        <p className="text-[#9CA3AF] text-xs">
+                        <p className="text-muted-foreground text-xs">
                           Attempt {generationAttempts} of {maxGenerationAttempts}
                         </p>
                       )}
@@ -443,7 +443,7 @@ const GenerateRoadmap: React.FC = () => {
                       <Button
                         onClick={handleRetry}
                         disabled={isLoading || isRetrying}
-                        className="bg-[#EF4444] hover:bg-[#DC2626] text-white"
+                        className="bg-red-500 hover:bg-red-600 text-white"
                       >
                         <RotateCcw className="w-4 h-4 mr-2" />
                         Retry
@@ -452,7 +452,7 @@ const GenerateRoadmap: React.FC = () => {
                     <Button
                       onClick={resetForm}
                       variant="outline"
-                      className="border-[#374151] text-[#E2E8F0] hover:bg-[#1E293B]"
+                      className="border-border text-foreground hover:bg-foreground/[0.06]"
                     >
                       Try Different Prompt
                     </Button>
@@ -472,9 +472,9 @@ const GenerateRoadmap: React.FC = () => {
               exit={{ opacity: 0, scale: 0.95 }}
               className="space-y-6"
             >
-              <Card className="bg-[#1E293B] border-[#0F172A] shadow-2xl">
+              <Card className="glass border-border shadow-2xl">
                 <CardHeader>
-                  <CardTitle className="text-[#60A5FA] flex items-center gap-2">
+                  <CardTitle className="text-orange-400 flex items-center gap-2">
                     <Loader2 className="w-5 h-5 animate-spin" />
                     {isRetrying ? "Retrying Generation" : "Generating Your Roadmap"}
                   </CardTitle>
@@ -483,10 +483,10 @@ const GenerateRoadmap: React.FC = () => {
                   {/* Overall Progress */}
                   <div className="space-y-2">
                     <div className="flex justify-between text-sm">
-                      <span className="text-[#E2E8F0]">Overall Progress</span>
-                      <span className="text-[#60A5FA] font-medium">{currentProgress?.progress || 0}%</span>
+                      <span className="text-foreground">Overall Progress</span>
+                      <span className="text-orange-400 font-medium">{currentProgress?.progress || 0}%</span>
                     </div>
-                    <Progress value={currentProgress?.progress || 0} className="h-2 bg-[#0F172A]" />
+                    <Progress value={currentProgress?.progress || 0} className="h-2 bg-foreground/[0.03]" />
                   </div>
 
                   {/* Timeout Warning */}
@@ -494,12 +494,12 @@ const GenerateRoadmap: React.FC = () => {
                     <motion.div
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
-                      className="p-4 bg-[#EF4444] bg-opacity-10 border border-[#EF4444] rounded-lg flex gap-3"
+                      className="p-4 bg-red-500/10 border border-red-500/30 rounded-lg flex gap-3"
                     >
-                      <AlertCircle className="w-5 h-5 text-[#EF4444] flex-shrink-0" />
-                      <div className="text-sm text-[#E2E8F0]">
-                        <p className="font-semibold text-[#EF4444]">Generation is taking longer than expected</p>
-                        <p className="text-[#9CA3AF] text-xs mt-1">Try retrying with a simpler prompt</p>
+                      <AlertCircle className="w-5 h-5 text-red-400 flex-shrink-0" />
+                      <div className="text-sm text-foreground">
+                        <p className="font-semibold text-red-400">Generation is taking longer than expected</p>
+                        <p className="text-muted-foreground text-xs mt-1">Try retrying with a simpler prompt</p>
                       </div>
                     </motion.div>
                   )}
@@ -519,19 +519,19 @@ const GenerateRoadmap: React.FC = () => {
                           transition={{ delay: index * 0.1 }}
                           className={`flex items-center gap-3 p-3 rounded-lg transition-all duration-300 ${
                             isActive
-                              ? "bg-[#0F172A] border border-[#3B82F6]"
+                              ? "bg-foreground/[0.03] border border-orange-500/40"
                               : isCompleted
-                                ? "bg-[#0F172A] opacity-75"
+                                ? "bg-foreground/[0.03] opacity-75"
                                 : "opacity-50"
                           }`}
                         >
                           <div
                             className={`p-2 rounded-full transition-all duration-300 ${
                               isActive
-                                ? "bg-[#3B82F6] text-white"
+                                ? "bg-orange-500 text-white"
                                 : isCompleted
                                   ? "bg-green-500 text-white"
-                                  : "bg-[#374151] text-[#9CA3AF]"
+                                  : "bg-foreground/[0.06] text-muted-foreground"
                             }`}
                           >
                             {isCompleted ? (
@@ -540,7 +540,7 @@ const GenerateRoadmap: React.FC = () => {
                               <Icon className={`w-4 h-4 ${isActive ? "animate-pulse" : ""}`} />
                             )}
                           </div>
-                          <span className={`font-medium ${isActive ? "text-[#60A5FA]" : "text-[#E2E8F0]"}`}>
+                          <span className={`font-medium ${isActive ? "text-orange-400" : "text-foreground"}`}>
                             {step.label}
                           </span>
                           {isActive && (
@@ -549,7 +549,7 @@ const GenerateRoadmap: React.FC = () => {
                               transition={{ duration: 2, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
                               className="ml-auto"
                             >
-                              <Loader2 className="w-4 h-4 text-[#3B82F6]" />
+                              <Loader2 className="w-4 h-4 text-orange-400" />
                             </motion.div>
                           )}
                         </motion.div>
@@ -572,10 +572,10 @@ const GenerateRoadmap: React.FC = () => {
               className="space-y-6"
             >
               {/* Roadmap Header */}
-              <Card className="bg-[#1E293B] border-[#0F172A] shadow-2xl overflow-hidden">
+              <Card className="glass border-border shadow-2xl overflow-hidden">
                 <div className="relative">
                   {generatedRoadmap.coverImage && (
-                    <div className="h-48 bg-gradient-to-r from-[#3B82F6] to-[#2563EB] relative">
+                    <div className="h-48 bg-gradient-to-r from-orange-500/30 via-rose-500/20 to-violet-600/30 relative">
                       <div className="absolute inset-0 bg-black/20" />
                     </div>
                   )}
@@ -597,48 +597,48 @@ const GenerateRoadmap: React.FC = () => {
                       )}
                     </div>
 
-                    <h2 className="text-3xl font-bold text-[#60A5FA] mb-2">{generatedRoadmap.title}</h2>
+                    <h2 className="text-3xl font-bold text-orange-400 mb-2">{generatedRoadmap.title}</h2>
 
-                    <p className="text-[#E2E8F0] text-lg leading-relaxed">{generatedRoadmap.description}</p>
+                    <p className="text-foreground text-lg leading-relaxed">{generatedRoadmap.description}</p>
 
                     {generatedRoadmap.longDescription && (
-                      <p className="text-[#9CA3AF] leading-relaxed">{generatedRoadmap.longDescription}</p>
+                      <p className="text-muted-foreground leading-relaxed">{generatedRoadmap.longDescription}</p>
                     )}
 
                     {/* Stats Grid */}
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6">
-                      <div className="bg-[#0F172A] p-4 rounded-lg text-center">
-                        <Clock className="w-6 h-6 text-[#3B82F6] mx-auto mb-2" />
-                        <div className="text-[#60A5FA] font-semibold">
+                      <div className="bg-foreground/[0.03] p-4 rounded-lg text-center">
+                        <Clock className="w-6 h-6 text-orange-400 mx-auto mb-2" />
+                        <div className="text-orange-400 font-semibold">
                           {formatDuration(generatedRoadmap.estimatedDuration)}
                         </div>
-                        <div className="text-[#9CA3AF] text-sm">Duration</div>
+                        <div className="text-muted-foreground text-sm">Duration</div>
                       </div>
 
                       {generatedRoadmap.stats && (
                         <>
-                          <div className="bg-[#0F172A] p-4 rounded-lg text-center">
-                            <Eye className="w-6 h-6 text-[#3B82F6] mx-auto mb-2" />
-                            <div className="text-[#60A5FA] font-semibold">
+                          <div className="bg-foreground/[0.03] p-4 rounded-lg text-center">
+                            <Eye className="w-6 h-6 text-orange-400 mx-auto mb-2" />
+                            <div className="text-orange-400 font-semibold">
                               {generatedRoadmap.stats?.views?.toLocaleString() || "0"}
                             </div>
-                            <div className="text-[#9CA3AF] text-sm">Views</div>
+                            <div className="text-muted-foreground text-sm">Views</div>
                           </div>
 
-                          <div className="bg-[#0F172A] p-4 rounded-lg text-center">
-                            <Users className="w-6 h-6 text-[#3B82F6] mx-auto mb-2" />
-                            <div className="text-[#60A5FA] font-semibold">
+                          <div className="bg-foreground/[0.03] p-4 rounded-lg text-center">
+                            <Users className="w-6 h-6 text-orange-400 mx-auto mb-2" />
+                            <div className="text-orange-400 font-semibold">
                               {generatedRoadmap.stats?.completions?.toLocaleString() || "0"}
                             </div>
-                            <div className="text-[#9CA3AF] text-sm">Completions</div>
+                            <div className="text-muted-foreground text-sm">Completions</div>
                           </div>
 
-                          <div className="bg-[#0F172A] p-4 rounded-lg text-center">
-                            <Star className="w-6 h-6 text-[#3B82F6] mx-auto mb-2" />
-                            <div className="text-[#60A5FA] font-semibold">
+                          <div className="bg-foreground/[0.03] p-4 rounded-lg text-center">
+                            <Star className="w-6 h-6 text-orange-400 mx-auto mb-2" />
+                            <div className="text-orange-400 font-semibold">
                               {generatedRoadmap.stats?.averageRating?.toFixed(1) || "0.0"}
                             </div>
-                            <div className="text-[#9CA3AF] text-sm">Rating</div>
+                            <div className="text-muted-foreground text-sm">Rating</div>
                           </div>
                         </>
                       )}
@@ -647,10 +647,10 @@ const GenerateRoadmap: React.FC = () => {
                     {/* Tags */}
                     {generatedRoadmap.tags && generatedRoadmap.tags.length > 0 && (
                       <div className="space-y-2">
-                        <h4 className="text-[#60A5FA] font-semibold">Tags</h4>
+                        <h4 className="text-orange-400 font-semibold">Tags</h4>
                         <div className="flex flex-wrap gap-2">
                           {generatedRoadmap.tags.map((tag, index) => (
-                            <Badge key={index} variant="outline" className="border-[#374151] text-[#E2E8F0]">
+                            <Badge key={index} variant="outline" className="border-border text-foreground">
                               {tag}
                             </Badge>
                           ))}
@@ -660,8 +660,8 @@ const GenerateRoadmap: React.FC = () => {
 
                     {/* Learning Path Preview */}
                     {generatedNodes.length > 0 && (
-                      <div className="space-y-3 pt-4 border-t border-[#374151]">
-                        <h4 className="text-[#60A5FA] font-semibold flex items-center gap-2">
+                      <div className="space-y-3 pt-4 border-t border-border">
+                        <h4 className="text-orange-400 font-semibold flex items-center gap-2">
                           <Target className="w-4 h-4" />
                           Learning Path ({generatedNodes.length} sections)
                         </h4>
@@ -669,17 +669,17 @@ const GenerateRoadmap: React.FC = () => {
                           {generatedNodes.map((node: any, index: number) => (
                             <div 
                               key={node._id || index} 
-                              className="flex items-start gap-3 p-3 bg-[#0F172A] rounded-lg hover:bg-[#1E293B] transition-colors"
+                              className="flex items-start gap-3 p-3 bg-foreground/[0.03] rounded-lg hover:bg-foreground/[0.06] transition-colors"
                             >
-                              <div className="flex items-center justify-center w-6 h-6 bg-[#3B82F6] text-white text-xs font-bold rounded-full shrink-0">
+                              <div className="flex items-center justify-center w-6 h-6 bg-orange-500 text-white text-xs font-bold rounded-full shrink-0">
                                 {index + 1}
                               </div>
                               <div className="flex-1 min-w-0">
-                                <div className="text-[#E2E8F0] font-medium truncate">{node.title}</div>
+                                <div className="text-foreground font-medium truncate">{node.title}</div>
                                 {node.description && (
-                                  <p className="text-[#9CA3AF] text-sm line-clamp-1">{node.description}</p>
+                                  <p className="text-muted-foreground text-sm line-clamp-1">{node.description}</p>
                                 )}
-                                <div className="flex items-center gap-2 mt-1 text-xs text-[#9CA3AF]">
+                                <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
                                   {node.estimatedDuration && (
                                     <span className="flex items-center gap-1">
                                       <Clock className="w-3 h-3" />
@@ -702,8 +702,8 @@ const GenerateRoadmap: React.FC = () => {
 
                     {/* Resources Preview */}
                     {generatedNodes.some((node: any) => node.resources?.length > 0) && (
-                      <div className="space-y-3 pt-4 border-t border-[#374151]">
-                        <h4 className="text-[#60A5FA] font-semibold flex items-center gap-2">
+                      <div className="space-y-3 pt-4 border-t border-border">
+                        <h4 className="text-orange-400 font-semibold flex items-center gap-2">
                           <BookOpen className="w-4 h-4" />
                           Resources Preview
                         </h4>
@@ -712,13 +712,13 @@ const GenerateRoadmap: React.FC = () => {
                             .filter((node: any) => node.resources?.length > 0)
                             .slice(0, 3)
                             .map((node: any, index: number) => (
-                              <div key={index} className="bg-[#0F172A] rounded-lg p-3">
-                                <div className="text-[#E2E8F0] text-sm font-semibold mb-2">{node.title}</div>
+                              <div key={index} className="bg-foreground/[0.03] rounded-lg p-3">
+                                <div className="text-foreground text-sm font-semibold mb-2">{node.title}</div>
                                 <div className="flex flex-wrap gap-2">
                                   {node.resources.slice(0, 4).map((resource: any, rIndex: number) => (
                                     <span
                                       key={rIndex}
-                                      className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-[#1E293B] text-[#93C5FD] rounded-md"
+                                      className="inline-flex items-center gap-1 px-2 py-1 text-xs bg-foreground/[0.04] text-orange-400 rounded-md"
                                     >
                                       {getResourceIcon(resource.resourceType || resource.type)}
                                       {resource.title}
@@ -734,13 +734,13 @@ const GenerateRoadmap: React.FC = () => {
                     {/* Prerequisites */}
                     {generatedRoadmap.prerequisites && generatedRoadmap.prerequisites.length > 0 && (
                       <div className="space-y-2">
-                        <h4 className="text-[#60A5FA] font-semibold flex items-center gap-2">
+                        <h4 className="text-orange-400 font-semibold flex items-center gap-2">
                           <BookOpen className="w-4 h-4" />
                           Prerequisites
                         </h4>
                         <div className="space-y-1">
                           {generatedRoadmap.prerequisites.map((prereq: any, index: number) => (
-                            <div key={index} className="text-[#E2E8F0] text-sm">
+                            <div key={index} className="text-foreground text-sm">
                               • {typeof prereq === 'string' ? prereq : prereq.title || 'Unknown'}
                             </div>
                           ))}
@@ -750,19 +750,19 @@ const GenerateRoadmap: React.FC = () => {
 
                     {/* Contributor */}
                     {generatedRoadmap.contributor && (
-                      <div className="flex items-center gap-3 pt-4 border-t border-[#374151]">
-                        <div className="w-10 h-10 bg-[#3B82F6] rounded-full flex items-center justify-center">
+                      <div className="flex items-center gap-3 pt-4 border-t border-border">
+                        <div className="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center">
                           <User className="w-5 h-5 text-white" />
                         </div>
                         <div>
-                          <div className="text-[#E2E8F0] font-medium">{generatedRoadmap.contributor?.username || "Unknown"}</div>
-                          <div className="text-[#9CA3AF] text-sm">Contributor</div>
+                          <div className="text-foreground font-medium">{generatedRoadmap.contributor?.username || "Unknown"}</div>
+                          <div className="text-muted-foreground text-sm">Contributor</div>
                         </div>
                       </div>
                     )}
 
                     {/* Metadata */}
-                    <div className="flex flex-wrap gap-4 pt-4 border-t border-[#374151] text-sm text-[#9CA3AF]">
+                    <div className="flex flex-wrap gap-4 pt-4 border-t border-border text-sm text-muted-foreground">
                       {generatedRoadmap.publishedAt && (
                         <div className="flex items-center gap-1">
                           <Calendar className="w-4 h-4" />
@@ -783,7 +783,7 @@ const GenerateRoadmap: React.FC = () => {
               {/* Action Buttons */}
               <div className="flex flex-wrap gap-4 justify-center">
                 <Button 
-                  className="bg-[#3B82F6] hover:bg-[#2563EB] text-white"
+                  className="bg-gradient-to-r from-orange-500 via-rose-500 to-violet-600 text-white"
                   onClick={() => {
                     if (generatedRoadmap._id) {
                       navigate(`/details/${generatedRoadmap._id}`)
@@ -795,7 +795,7 @@ const GenerateRoadmap: React.FC = () => {
                 </Button>
                 <Button 
                   variant="outline" 
-                  className="border-[#374151] text-[#E2E8F0] hover:bg-[#1E293B]"
+                  className="border-border text-foreground hover:bg-foreground/[0.06]"
                   onClick={resetForm}
                 >
                   <Sparkles className="w-4 h-4 mr-2" />
@@ -803,7 +803,7 @@ const GenerateRoadmap: React.FC = () => {
                 </Button>
                 <Button
                   variant="outline"
-                  className="border-[#374151] text-[#E2E8F0] hover:bg-[#1E293B]"
+                  className="border-border text-foreground hover:bg-foreground/[0.06]"
                   onClick={handleShareGenerated}
                 >
                   <Share2 className="w-4 h-4 mr-2" />
@@ -811,7 +811,7 @@ const GenerateRoadmap: React.FC = () => {
                 </Button>
                 <Button
                   variant="outline"
-                  className="border-[#374151] text-[#E2E8F0] hover:bg-[#1E293B]"
+                  className="border-border text-foreground hover:bg-foreground/[0.06]"
                   onClick={handleDownloadGenerated}
                 >
                   <Download className="w-4 h-4 mr-2" />

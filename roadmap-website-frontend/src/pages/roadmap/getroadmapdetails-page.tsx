@@ -1074,7 +1074,20 @@ const handleAddBookmark = () => {
     }
   };
 
-  // 👉 Now conditionally render after all hooks
+  // Must be called before any early returns to satisfy Rules of Hooks
+  const progressMap = useMemo(() => {
+    const map = new Map<string, INodeProgressResponse>()
+    userProgress?.nodes?.forEach((entry: any) => {
+      const id = typeof entry.node === "string" ? entry.node : entry.node?._id
+      if (id) map.set(id, entry)
+    })
+    return map
+  }, [userProgress])
+
+  const getNodeProgress = (nodeId: string): INodeProgressResponse | undefined => {
+    return progressMap.get(nodeId)
+  }
+
   if (!RoadmapDetails) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -1104,19 +1117,6 @@ const handleAddBookmark = () => {
         </div>
       </div>
     )
-  }
-
-  const progressMap = useMemo(() => {
-    const map = new Map<string, INodeProgressResponse>()
-    userProgress?.nodes?.forEach((entry: any) => {
-      const id = typeof entry.node === "string" ? entry.node : entry.node?._id
-      if (id) map.set(id, entry)
-    })
-    return map
-  }, [userProgress])
-
-  const getNodeProgress = (nodeId: string): INodeProgressResponse | undefined => {
-    return progressMap.get(nodeId)
   }
   return (
     <div className="min-h-screen bg-background">

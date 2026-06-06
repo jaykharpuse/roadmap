@@ -1,27 +1,17 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { motion } from "framer-motion"
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { MessageCircle, Users } from "lucide-react"
+import { MessageCircle, Users, Send, ChevronRight } from "lucide-react"
 
 export default function ContactSupport() {
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    message: "",
-  })
+  const [formData, setFormData] = useState({ name: "", email: "", message: "" })
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    })
+    setFormData({ ...formData, [e.target.name]: e.target.value })
   }
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -29,168 +19,185 @@ export default function ContactSupport() {
     console.log("Form submitted:", formData)
   }
 
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.2,
-        delayChildren: 0.1,
-      },
-    },
-  }
-
-  const itemVariants = {
-    hidden: { opacity: 0, y: 30 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration: 0.6,
-        ease: "easeOut",
-      },
-    },
-  }
-
-  const faqs = ["How can I create a roadmap?", "Is there a fee to download?", "How do I access resources?"]
+  const faqs = [
+    "How can I create a custom roadmap?",
+    "Is there a fee to download roadmaps?",
+    "How do I access learning resources?",
+  ]
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 py-16 px-4">
-      <div className="max-w-6xl mx-auto">
+    <section className="relative bg-background py-28 px-5 md:px-8 overflow-hidden">
+
+      {/* Divider line top */}
+      <div className="gradient-line w-full max-w-7xl mx-auto mb-20" />
+
+      {/* Background glow */}
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute top-1/2 right-0 -translate-y-1/2 w-[500px] h-[500px] rounded-full bg-orange-500/[0.05] blur-[110px]" />
+      </div>
+
+      <div className="relative z-10 max-w-7xl mx-auto">
+
+        {/* Header */}
         <motion.div
-          className="text-center mb-12"
-          initial={{ opacity: 0, y: -30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
+          className="text-center mb-14"
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: "-60px" }}
+          transition={{ duration: 0.65 }}
         >
-          <h1 className="text-4xl md:text-5xl font-bold text-gray-900 mb-4">Contact / Support</h1>
+          <p className="text-xs font-semibold tracking-widest uppercase text-orange-400/70 mb-3">
+            Get in Touch
+          </p>
+          <h2
+            className="text-4xl md:text-5xl font-bold text-white"
+            style={{ fontFamily: 'Syne, sans-serif' }}
+          >
+            Contact &{" "}
+            <span className="text-gradient-brand">Support.</span>
+          </h2>
         </motion.div>
 
-        <motion.div
-          className="grid grid-cols-1 lg:grid-cols-2 gap-8"
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-        >
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
           {/* Contact Form */}
-          <motion.div variants={itemVariants}>
-            <Card className="h-full shadow-lg border-0 bg-white">
-              <CardHeader>
-                <CardTitle className="text-2xl font-semibold text-gray-900">Contact</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <form onSubmit={handleSubmit} className="space-y-6">
-                  <motion.div whileFocus={{ scale: 1.02 }} transition={{ duration: 0.2 }}>
-                    <label htmlFor="name" className="block text-sm font-medium text-gray-700 mb-2">
-                      Name
-                    </label>
-                    <Input
-                      id="name"
-                      name="name"
-                      type="text"
-                      value={formData.name}
-                      onChange={handleInputChange}
-                      className="w-full h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500 transition-all duration-300"
-                      required
-                    />
-                  </motion.div>
+          <motion.div
+            initial={{ opacity: 0, x: -24 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, margin: "-60px" }}
+            transition={{ duration: 0.65 }}
+          >
+            <div className="glass rounded-2xl p-8 h-full">
+              <h3
+                className="text-xl font-semibold text-white mb-6"
+                style={{ fontFamily: 'Syne, sans-serif' }}
+              >
+                Send a message
+              </h3>
+              <form onSubmit={handleSubmit} className="space-y-5">
+                <div>
+                  <label className="block text-xs font-medium text-white/50 uppercase tracking-wider mb-2">
+                    Name
+                  </label>
+                  <Input
+                    name="name"
+                    type="text"
+                    value={formData.name}
+                    onChange={handleInputChange}
+                    placeholder="Your name"
+                    className="h-11 bg-white/[0.04] border-white/[0.08] text-white placeholder:text-white/25 focus:border-orange-500/40 focus:ring-orange-500/20 rounded-lg"
+                    required
+                  />
+                </div>
 
-                  <motion.div whileFocus={{ scale: 1.02 }} transition={{ duration: 0.2 }}>
-                    <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                      Email
-                    </label>
-                    <Input
-                      id="email"
-                      name="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={handleInputChange}
-                      className="w-full h-12 border-gray-200 focus:border-blue-500 focus:ring-blue-500 transition-all duration-300"
-                      required
-                    />
-                  </motion.div>
+                <div>
+                  <label className="block text-xs font-medium text-white/50 uppercase tracking-wider mb-2">
+                    Email
+                  </label>
+                  <Input
+                    name="email"
+                    type="email"
+                    value={formData.email}
+                    onChange={handleInputChange}
+                    placeholder="you@example.com"
+                    className="h-11 bg-white/[0.04] border-white/[0.08] text-white placeholder:text-white/25 focus:border-orange-500/40 focus:ring-orange-500/20 rounded-lg"
+                    required
+                  />
+                </div>
 
-                  <motion.div whileFocus={{ scale: 1.02 }} transition={{ duration: 0.2 }}>
-                    <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-2">
-                      Message
-                    </label>
-                    <Textarea
-                      id="message"
-                      name="message"
-                      value={formData.message}
-                      onChange={handleInputChange}
-                      rows={6}
-                      className="w-full border-gray-200 focus:border-blue-500 focus:ring-blue-500 transition-all duration-300 resize-none"
-                      required
-                    />
-                  </motion.div>
+                <div>
+                  <label className="block text-xs font-medium text-white/50 uppercase tracking-wider mb-2">
+                    Message
+                  </label>
+                  <Textarea
+                    name="message"
+                    value={formData.message}
+                    onChange={handleInputChange}
+                    rows={5}
+                    placeholder="How can we help you?"
+                    className="bg-white/[0.04] border-white/[0.08] text-white placeholder:text-white/25 focus:border-orange-500/40 focus:ring-orange-500/20 rounded-lg resize-none"
+                    required
+                  />
+                </div>
 
-                  <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
-                    <Button
-                      type="submit"
-                      className="w-full h-12 bg-[#0F172A] hover:bg-[#1E293B] text-white font-semibold rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl"
-                    >
-                      Send
-                    </Button>
-                  </motion.div>
-                </form>
-              </CardContent>
-            </Card>
+                <motion.button
+                  type="submit"
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="w-full h-11 flex items-center justify-center gap-2 text-sm font-semibold rounded-xl bg-gradient-to-r from-orange-500 via-rose-500 to-violet-600 text-white shadow-lg shadow-orange-500/20 hover:shadow-orange-500/35 hover:opacity-90 transition-all duration-300"
+                  style={{ fontFamily: 'Syne, sans-serif' }}
+                >
+                  <Send className="w-4 h-4" />
+                  Send Message
+                </motion.button>
+              </form>
+            </div>
           </motion.div>
 
-          {/* FAQs and Community */}
-          <motion.div className="space-y-8" variants={itemVariants}>
+          {/* FAQs + Community */}
+          <motion.div
+            className="flex flex-col gap-5"
+            initial={{ opacity: 0, x: 24 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true, margin: "-60px" }}
+            transition={{ duration: 0.65, delay: 0.1 }}
+          >
             {/* FAQs */}
-            <Card className="shadow-lg border-0 bg-white">
-              <CardHeader>
-                <CardTitle className="text-2xl font-semibold text-gray-900">FAQs</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <ul className="space-y-4">
-                  {faqs.map((faq, index) => (
-                    <motion.li
-                      key={index}
-                      className="flex items-start space-x-3 text-gray-700 hover:text-blue-600 transition-colors duration-200 cursor-pointer"
-                      whileHover={{ x: 5 }}
-                      transition={{ duration: 0.2 }}
-                    >
-                      <span className="text-blue-500 mt-1">•</span>
-                      <span>{faq}</span>
-                    </motion.li>
-                  ))}
-                </ul>
-              </CardContent>
-            </Card>
+            <div className="glass rounded-2xl p-8">
+              <h3
+                className="text-xl font-semibold text-white mb-5"
+                style={{ fontFamily: 'Syne, sans-serif' }}
+              >
+                FAQs
+              </h3>
+              <ul className="space-y-3">
+                {faqs.map((faq, index) => (
+                  <motion.li
+                    key={index}
+                    whileHover={{ x: 4 }}
+                    transition={{ duration: 0.2 }}
+                    className="group flex items-center gap-3 p-3 rounded-xl hover:bg-white/[0.04] cursor-pointer transition-colors duration-200"
+                  >
+                    <ChevronRight className="w-4 h-4 text-orange-400/50 group-hover:text-orange-400 transition-colors flex-shrink-0" />
+                    <span className="text-sm text-white/55 group-hover:text-white/80 transition-colors duration-200">
+                      {faq}
+                    </span>
+                  </motion.li>
+                ))}
+              </ul>
+            </div>
 
             {/* Community */}
-            <Card className="shadow-lg border-0 bg-white">
-              <CardContent className="pt-6">
-                <div className="text-center space-y-6">
-                  <motion.div
-                    className="w-16 h-16 mx-auto bg-blue-100 rounded-2xl flex items-center justify-center"
-                    whileHover={{ scale: 1.1, rotate: 5 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <MessageCircle className="w-8 h-8 text-blue-600" />
-                  </motion.div>
-
-                  <div>
-                    <h3 className="text-xl font-semibold text-gray-900 mb-2">Join our community</h3>
-                    <p className="text-gray-600">on Discord or Slack</p>
-                  </div>
-
-                  <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
-                    <Button className="bg-[#0F172A] hover:bg-[#1E293B] text-white px-8 py-3 rounded-lg font-semibold transition-all duration-300 shadow-lg hover:shadow-xl">
-                      <Users className="w-5 h-5 mr-2" />
-                      Join Community
-                    </Button>
-                  </motion.div>
+            <div className="glass rounded-2xl p-8 flex-1">
+              <div className="flex flex-col items-center text-center gap-5 h-full justify-center py-4">
+                <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-500/25 to-violet-600/10 border border-violet-500/20 flex items-center justify-center">
+                  <MessageCircle className="w-7 h-7 text-violet-400" />
                 </div>
-              </CardContent>
-            </Card>
+
+                <div>
+                  <h3
+                    className="text-xl font-semibold text-white mb-1.5"
+                    style={{ fontFamily: 'Syne, sans-serif' }}
+                  >
+                    Join our community
+                  </h3>
+                  <p className="text-sm text-white/45">Connect with learners on Discord or Slack</p>
+                </div>
+
+                <motion.button
+                  whileHover={{ scale: 1.03 }}
+                  whileTap={{ scale: 0.97 }}
+                  className="flex items-center gap-2 px-6 py-2.5 text-sm font-semibold rounded-xl bg-violet-500/[0.12] border border-violet-500/25 text-violet-300 hover:bg-violet-500/20 hover:border-violet-500/40 transition-all duration-200"
+                  style={{ fontFamily: 'Syne, sans-serif' }}
+                >
+                  <Users className="w-4 h-4" />
+                  Join Community
+                </motion.button>
+              </div>
+            </div>
           </motion.div>
-        </motion.div>
+        </div>
       </div>
-    </div>
+    </section>
   )
 }

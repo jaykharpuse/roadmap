@@ -18,25 +18,40 @@ const ProfileDropdown: React.FC = () => {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
-        <button className="flex items-center gap-2 px-3 py-2 rounded hover:bg-[#1E293B] focus:outline-none">
+        <button className="flex items-center gap-2.5 px-3 py-1.5 rounded-xl hover:bg-white/[0.06] focus:outline-none transition-colors duration-200">
           {user.profileUrl ? (
             <img
               src={user.profileUrl}
               alt="Profile"
-              className="w-8 h-8 rounded-full object-cover border border-blue-400"
+              className="w-7 h-7 rounded-full object-cover border border-orange-500/30"
             />
           ) : (
-            <span className="w-8 h-8 rounded-full bg-blue-500 flex items-center justify-center text-white font-bold">
+            <span className="w-7 h-7 rounded-full bg-gradient-to-br from-orange-400 via-rose-500 to-violet-500 flex items-center justify-center text-white text-xs font-bold">
               {(user.username || "U").charAt(0).toUpperCase()}
             </span>
           )}
-          <span className="hidden md:inline text-[#E2E8F0] font-medium">{user.username}</span>
+          <span className="hidden md:inline text-sm text-white/70 font-medium">
+            {user.username}
+          </span>
         </button>
       </DropdownMenuTrigger>
-      <DropdownMenuContent className="min-w-[180px] bg-[#1E293B] border border-[#334155] text-[#E2E8F0] shadow-lg rounded-md">
-        <DropdownMenuItem className="hover:bg-[#0F172A] hover:text-[#60A5FA]" onClick={() => navigate("/progress")}>Progress Dashboard</DropdownMenuItem>
-        <DropdownMenuItem className="hover:bg-[#0F172A] hover:text-[#60A5FA]" onClick={() => navigate("/profile")}>Profile</DropdownMenuItem>
-        <DropdownMenuItem className="hover:bg-[#0F172A] hover:text-[#60A5FA]" asChild>
+      <DropdownMenuContent className="min-w-[180px] bg-[#111116] border border-white/[0.08] text-white/80 shadow-xl shadow-black/40 rounded-xl py-1.5">
+        <DropdownMenuItem
+          className="text-sm hover:bg-white/[0.06] hover:text-orange-400 rounded-lg mx-1 cursor-pointer"
+          onClick={() => navigate("/progress")}
+        >
+          Progress Dashboard
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          className="text-sm hover:bg-white/[0.06] hover:text-orange-400 rounded-lg mx-1 cursor-pointer"
+          onClick={() => navigate("/profile")}
+        >
+          Profile
+        </DropdownMenuItem>
+        <DropdownMenuItem
+          className="text-sm hover:bg-white/[0.06] hover:text-rose-400 rounded-lg mx-1 cursor-pointer"
+          asChild
+        >
           <LogoutButton />
         </DropdownMenuItem>
       </DropdownMenuContent>

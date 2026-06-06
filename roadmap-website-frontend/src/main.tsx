@@ -6,14 +6,17 @@ import { store } from "./state/store.tsx";
 import { BrowserRouter } from "react-router-dom";
 import { Toaster } from "sonner";
 import { AuthProvider } from "./contexts/authContext.tsx";
+import { ThemeProvider } from "next-themes";
 
 createRoot(document.getElementById("root")!).render(
-  <Provider store={store}>
-    <BrowserRouter>
-      <AuthProvider>
-        <Toaster />
-        <App />
-      </AuthProvider>
-    </BrowserRouter>
-  </Provider>
+  <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
+    <Provider store={store}>
+      <BrowserRouter>
+        <AuthProvider>
+          <Toaster theme="dark" />
+          <App />
+        </AuthProvider>
+      </BrowserRouter>
+    </Provider>
+  </ThemeProvider>
 );

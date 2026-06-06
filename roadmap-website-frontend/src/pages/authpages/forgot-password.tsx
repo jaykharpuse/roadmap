@@ -3,103 +3,141 @@ import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
-import {
-  Form,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormControl,
-  FormMessage,
-} from "@/components/ui/form";
+import { Form, FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { ForgotPasswordSchema } from "@/schema/authschema/ForgotPasswordFormSchema";
-
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "@/hooks/useAppDispatch";
 import { forgotPassword } from "@/state/slices/authSlice";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, Route, ArrowRight, MailCheck } from "lucide-react";
+import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
 
 const ForgotPassword: React.FC = () => {
   const dispatch = useAppDispatch();
- 
   const [isBackToLogin, setIsBackToLogin] = useState<boolean>(false);
   const { isLoading } = useAppSelector((state) => state.auth);
   const navigate = useNavigate();
 
   const form = useForm<z.infer<typeof ForgotPasswordSchema>>({
     resolver: zodResolver(ForgotPasswordSchema),
-    defaultValues: {
-      email: "",
-    },
+    defaultValues: { email: "" },
   });
 
- const onSubmit = (data: z.infer<typeof ForgotPasswordSchema>) => {
-  dispatch(forgotPassword(data))
-    .unwrap()
-    .then(() => {
-      setIsBackToLogin(true);
-      toast.success("Mail sent successfully", {
-        description: "Check your inbox and return to login.",
-      });
-    })
-    .catch((error) =>
-      toast.error("Invalid Email", {
-        description: error,
+  const onSubmit = (data: z.infer<typeof ForgotPasswordSchema>) => {
+    dispatch(forgotPassword(data))
+      .unwrap()
+      .then(() => {
+        setIsBackToLogin(true);
+        toast.success("Reset link sent!", { description: "Check your inbox." });
       })
-    );
-};
-
+      .catch((error) => toast.error("Invalid email", { description: error }));
+  };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-b from-[#0F172A] to-[#020617]">
-      <div className="w-full max-w-md p-8 rounded-lg shadow-md bg-[#1E293B] hover:bg-[#0F172A] transition-colors duration-300">
-        <h2 className="text-2xl font-bold mb-6 text-center text-[#60A5FA]">Forgot Password</h2>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-sm font-medium text-[#E2E8F0]">
-                    Email
-                  </FormLabel>
-                  <FormControl>
-                    <Input
-                      placeholder="Enter your email"
-                      type="email"
-                      className="border-[#1E293B] rounded-md shadow-sm focus:ring-[#3B82F6] bg-[#0F172A] focus:ring-2 text-[#E2E8F0] placeholder-[#64748B]"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            {!isBackToLogin ? (
-              <Button
-                type="submit"
-                className="w-full py-2 bg-[#2563EB] text-white rounded-md shadow hover:bg-[#1D4ED8] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
-              >
-                {isLoading ? (
-                  <Loader2 className="h-6 w-6 animate-spin" />
-                ) : (
-                  "Send Mail"
-                )}
-              </Button>
-            ) : (
-              <Button
-                type="button"
-                onClick={() => navigate("/login")}
-                className="w-full py-2 bg-[#2563EB] text-white rounded-md shadow hover:bg-[#1D4ED8] focus:outline-none focus:ring-2 focus:ring-[#3B82F6]"
-              >
-                Back To Login
-              </Button>
-            )}
-          </form>
-        </Form>
+    <div className="relative min-h-screen flex items-center justify-center bg-background overflow-hidden px-5">
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[700px] h-[500px] rounded-full bg-rose-500/[0.06] blur-[120px]" />
+        <div className="absolute bottom-0 right-0 w-[400px] h-[400px] rounded-full bg-violet-600/[0.06] blur-[100px]" />
       </div>
+
+      <motion.div
+        initial={{ opacity: 0, y: 32 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1] }}
+        className="relative z-10 w-full max-w-md"
+      >
+        <div className="flex justify-center mb-8">
+          <Link to="/" className="flex items-center gap-2">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-orange-400 via-rose-500 to-violet-500 flex items-center justify-center shadow-lg shadow-orange-500/25">
+              <Route className="w-5 h-5 text-white" />
+            </div>
+            <span className="text-xl font-bold text-white" style={{ fontFamily: 'Syne, sans-serif' }}>
+              Road<span className="text-gradient-brand">Mapper</span>
+            </span>
+          </Link>
+        </div>
+
+        <div className="glass-strong rounded-2xl p-8">
+          {isBackToLogin ? (
+            <div className="text-center py-4">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-500/20 to-violet-500/20 border border-white/[0.08] flex items-center justify-center mx-auto mb-5">
+                <MailCheck className="w-7 h-7 text-orange-400" />
+              </div>
+              <h2 className="text-2xl font-bold text-white mb-2" style={{ fontFamily: 'Syne, sans-serif' }}>
+                Check your inbox
+              </h2>
+              <p className="text-sm text-white/40 mb-6">
+                We sent a password reset link to your email address.
+              </p>
+              <Button
+                onClick={() => navigate("/login")}
+                className="w-full h-11 text-sm font-semibold rounded-xl bg-gradient-to-r from-orange-500 via-rose-500 to-violet-600 text-white border-0 shadow-lg shadow-orange-500/20 hover:opacity-90"
+                style={{ fontFamily: 'Syne, sans-serif' }}
+              >
+                Back to Sign In
+              </Button>
+            </div>
+          ) : (
+            <>
+              <div className="mb-8 text-center">
+                <h1 className="text-2xl font-bold text-white mb-1.5" style={{ fontFamily: 'Syne, sans-serif' }}>
+                  Reset password
+                </h1>
+                <p className="text-sm text-white/40">We'll send a reset link to your email</p>
+              </div>
+
+              <Form {...form}>
+                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
+                  <FormField
+                    control={form.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-xs font-medium text-white/50 uppercase tracking-wider">
+                          Email
+                        </FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="you@example.com"
+                            type="email"
+                            className="h-11 bg-white/[0.04] border-white/[0.08] text-white placeholder:text-white/25 focus:border-orange-500/40 focus:ring-orange-500/20 rounded-xl"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage className="text-rose-400 text-xs" />
+                      </FormItem>
+                    )}
+                  />
+
+                  <Button
+                    type="submit"
+                    disabled={isLoading}
+                    className="w-full h-11 text-sm font-semibold rounded-xl bg-gradient-to-r from-orange-500 via-rose-500 to-violet-600 text-white border-0 shadow-lg shadow-orange-500/20 hover:opacity-90 disabled:opacity-60"
+                    style={{ fontFamily: 'Syne, sans-serif' }}
+                  >
+                    {isLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <span className="flex items-center gap-2">
+                        Send Reset Link <ArrowRight className="w-4 h-4" />
+                      </span>
+                    )}
+                  </Button>
+                </form>
+              </Form>
+
+              <p className="mt-6 text-center text-sm text-white/35">
+                Remember your password?{" "}
+                <Link to="/login" className="text-orange-400/80 hover:text-orange-400 font-medium transition-colors">
+                  Sign in
+                </Link>
+              </p>
+            </>
+          )}
+        </div>
+      </motion.div>
     </div>
   );
 };

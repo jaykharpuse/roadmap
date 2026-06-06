@@ -72,19 +72,12 @@ export const logoutUser = createAsyncThunk<any, void, { rejectValue: string }>(
   "auth/logoutUser",
   async (_, { rejectWithValue }) => {
     try {
-      const { data } = await axiosInstance.post(`/user/logout`, {
-        withCredentials: true,
-      });
-      
-      // Remove token from localStorage
+      const { data } = await axiosInstance.post(`/user/logout`);
       localStorage.removeItem("authToken");
-      
       return data;
     } catch (error: any) {
-      console.log('error inside logout : ', error)
-      // Still remove the token even if logout fails
       localStorage.removeItem("authToken");
-      return rejectWithValue(error.response?.data?.message || error.message);
+      return rejectWithValue(error.response?.data?.error || error.message);
     }
   }
 );
@@ -101,7 +94,7 @@ export const forgotPassword = createAsyncThunk<
     });
     return data;
   } catch (error: any) {
-    return rejectWithValue(error.response?.data?.message || error.message);
+    return rejectWithValue(error.response?.data?.error || error.message);
   }
 });
 
@@ -119,7 +112,7 @@ export const resetPassword = createAsyncThunk<
     );
     return data;
   } catch (error: any) {
-    return rejectWithValue(error.response?.data?.message || error.message);
+    return rejectWithValue(error.response?.data?.error || error.message);
   }
 });
 

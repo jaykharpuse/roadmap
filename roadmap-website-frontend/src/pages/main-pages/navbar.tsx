@@ -2,15 +2,9 @@ import React, { useState, useEffect } from 'react';
 import ProfileDropdown from '@/components/ProfileDropdown';
 import { useAuth } from '@/contexts/authContext';
 import { Link } from 'react-router-dom';
-import { 
-  Route,
-  Menu,
-  X,
-  Home,
-  TrendingUp,
-  User,
-  BookOpen
-} from 'lucide-react';
+import { Route, Menu, X, BookOpen, TrendingUp, Map, Sun, Moon } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useTheme } from 'next-themes';
 
 interface NavItem {
   id: number;
@@ -22,129 +16,154 @@ interface NavItem {
 const Navbar: React.FC = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const { isAuthenticated } = useAuth();
+  const { theme, setTheme } = useTheme();
 
   const navItems: NavItem[] = [
-    { id: 1, name: 'Home', icon: <Home className="w-5 h-5" />, path: '/' },
-    { id: 2, name: 'Roadmaps', icon: <Route className="w-5 h-5" />, path: '/roadmaps' },
-    { id: 3, name: 'Resources', icon: <BookOpen className="w-5 h-5" />, path: '/resources' },
-    { id: 4, name: 'Progress', icon: <TrendingUp className="w-5 h-5" />, path: '/progress' },
-    // { id: 5, name: 'Timeline', icon: <CalendarDays className="w-5 h-5" />, path: '/timeline' },
-    { id: 6, name: 'Profile', icon: <User className="w-5 h-5" />, path: '/profile' },
-    // { id: 7, name: 'Settings', icon: <Settings className="w-5 h-5" />, path: '/settings' },
+    { id: 1, name: 'Roadmaps',  icon: <Map className="w-4 h-4" />,      path: '/roadmaps' },
+    { id: 2, name: 'Resources', icon: <BookOpen className="w-4 h-4" />,  path: '/resources' },
+    { id: 3, name: 'Progress',  icon: <TrendingUp className="w-4 h-4" />, path: '/progress' },
   ];
 
   useEffect(() => {
-    const handleScroll = () => {
-      if (window.scrollY > 10) {
-        setScrolled(true);
-      } else {
-        setScrolled(false);
-      }
-    };
-
+    setMounted(true);
+    const handleScroll = () => setScrolled(window.scrollY > 12);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  const toggleMobileMenu = () => {
-    setIsMobileMenuOpen(!isMobileMenuOpen);
-  };
+  const toggleTheme = () => setTheme(theme === 'dark' ? 'light' : 'dark');
 
   return (
-    <nav className={` w-full z-50 transition-all duration-300 ${scrolled 
-    ?
-     'bg-[#0F172A] shadow-lg py-2' 
-     : 
-     'bg-gradient-to-b from-[#0F172A] to-[#020617] py-4'
-     }
-     `
-     }
-     >
-      <div className="container mx-auto px-4">
-        <div className="flex justify-between items-center">
+    <nav
+      className={`sticky top-0 w-full z-50 transition-all duration-500 ${
+        scrolled
+          ? 'bg-background/90 backdrop-blur-xl border-b border-border shadow-sm'
+          : 'bg-background/60 backdrop-blur-md'
+      }`}
+    >
+      <div className="max-w-7xl mx-auto px-5 md:px-8">
+        <div className="flex items-center justify-between h-16">
+
           {/* Logo */}
-          <div className="flex items-center">
-            <Route className="text-[#60A5FA] w-6 h-6 mr-2" />
-            <span className="text-xl font-bold text-[#60A5FA]">RoadMapper</span>
+          <Link to="/" className="flex items-center gap-2.5 group">
+            <div className="relative w-8 h-8 rounded-lg bg-gradient-to-br from-orange-400 via-rose-500 to-violet-500 flex items-center justify-center shadow-lg shadow-orange-500/20 group-hover:shadow-orange-500/40 transition-shadow duration-300">
+              <Route className="w-4 h-4 text-white" />
+            </div>
+            <span className="text-lg font-bold tracking-tight text-foreground" style={{ fontFamily: 'Syne, sans-serif' }}>
+              Road<span className="text-gradient-brand">Mapper</span>
+            </span>
+          </Link>
+
+          {/* Desktop Nav */}
+          <div className="hidden md:flex items-center gap-1">
+            {navItems.map((item) => (
+              <Link
+                key={item.id}
+                to={item.path}
+                className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-foreground/60 hover:text-foreground rounded-lg hover:bg-foreground/[0.06] transition-all duration-200"
+              >
+                {item.icon}
+                {item.name}
+              </Link>
+            ))}
           </div>
 
-          {/* Desktop Navigation */}
-          <div className="hidden md:flex space-x-6 items-center">
-            {navItems
-              .filter(item => item.name !== 'Profile')
-              .map((item) => (
-                <Link
-                  key={item.id}
-                  to={item.path}
-                  className="flex items-center text-[#E2E8F0] hover:text-[#3B82F6] transition-colors"
-                >
-                  <span className="mr-2">{item.icon}</span>
-                  {item.name}
-                </Link>
-              ))}
-            {isAuthenticated ? (
-              <>
-                <ProfileDropdown />
-              </>
-            ) : (
-              <Link
-                to="/login"
-                className="px-4 py-2 bg-[#2563EB] text-white rounded hover:bg-[#1D4ED8] ml-4"
+          {/* Desktop Right */}
+          <div className="hidden md:flex items-center gap-2">
+            {/* Theme Toggle */}
+            {mounted && (
+              <button
+                onClick={toggleTheme}
+                className="p-2 rounded-lg text-foreground/60 hover:text-foreground hover:bg-foreground/[0.06] transition-all duration-200"
+                aria-label="Toggle theme"
               >
-                Login
-              </Link>
+                {theme === 'dark'
+                  ? <Sun className="w-4 h-4" />
+                  : <Moon className="w-4 h-4" />
+                }
+              </button>
+            )}
+
+            {isAuthenticated ? (
+              <ProfileDropdown />
+            ) : (
+              <>
+                <Link to="/login" className="px-4 py-2 text-sm font-medium text-foreground/60 hover:text-foreground transition-colors duration-200">
+                  Sign in
+                </Link>
+                <Link
+                  to="/signup"
+                  className="px-4 py-2 text-sm font-semibold rounded-lg bg-gradient-to-r from-orange-500 via-rose-500 to-violet-600 text-white shadow-lg shadow-orange-500/20 hover:shadow-orange-500/35 hover:opacity-90 transition-all duration-200"
+                >
+                  Get Started
+                </Link>
+              </>
             )}
           </div>
 
-          {/* Mobile menu button */}
-          <div className="md:hidden">
+          {/* Mobile controls */}
+          <div className="md:hidden flex items-center gap-1">
+            {mounted && (
+              <button
+                onClick={toggleTheme}
+                className="p-2 rounded-lg text-foreground/60 hover:text-foreground hover:bg-foreground/[0.06] transition-colors"
+              >
+                {theme === 'dark' ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+              </button>
+            )}
             <button
-              onClick={toggleMobileMenu}
-              className="text-[#E2E8F0] focus:outline-none"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="p-2 rounded-lg text-foreground/60 hover:text-foreground hover:bg-foreground/[0.06] transition-colors"
               aria-label="Toggle menu"
             >
-              {isMobileMenuOpen ? (
-                <X className="w-6 h-6" />
-              ) : (
-                <Menu className="w-6 h-6" />
-              )}
+              {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
           </div>
         </div>
-
-        {/* Mobile Navigation */}
-        {isMobileMenuOpen && (
-          <div className="md:hidden mt-4 pb-4">
-            <div className="flex flex-col space-y-3">
-              {navItems
-                .filter(item => item.name !== 'Profile')
-                .map((item) => (
-                  <Link
-                    key={item.id}
-                    to={item.path}
-                    className="flex items-center px-4 py-2 text-[#E2E8F0] hover:bg-[#1E293B] hover:text-[#3B82F6] rounded-lg transition-colors"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    <span className="mr-3">{item.icon}</span>
-                    {item.name}
-                  </Link>
-                ))}
-              {isAuthenticated ? (
-                <ProfileDropdown />
-              ) : (
-                <Link
-                  to="/login"
-                  className="px-4 py-2 bg-[#2563EB] text-white rounded hover:bg-[#1D4ED8] mt-2"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                >
-                  Login
-                </Link>
-              )}
-            </div>
-          </div>
-        )}
       </div>
+
+      {/* Mobile Menu */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div
+            initial={{ opacity: 0, height: 0 }}
+            animate={{ opacity: 1, height: 'auto' }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.22, ease: 'easeInOut' }}
+            className="md:hidden overflow-hidden border-t border-border bg-background/95 backdrop-blur-xl"
+          >
+            <div className="max-w-7xl mx-auto px-5 py-4 flex flex-col gap-1">
+              {navItems.map((item) => (
+                <Link
+                  key={item.id}
+                  to={item.path}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-foreground/65 hover:text-foreground rounded-xl hover:bg-foreground/[0.06] transition-all duration-200"
+                >
+                  {item.icon}
+                  {item.name}
+                </Link>
+              ))}
+              <div className="pt-3 mt-2 border-t border-border flex flex-col gap-2">
+                {isAuthenticated ? (
+                  <ProfileDropdown />
+                ) : (
+                  <>
+                    <Link to="/login" onClick={() => setIsMobileMenuOpen(false)} className="px-4 py-3 text-sm font-medium text-foreground/60 text-center rounded-xl hover:bg-foreground/[0.06]">
+                      Sign in
+                    </Link>
+                    <Link to="/signup" onClick={() => setIsMobileMenuOpen(false)} className="px-4 py-3 text-sm font-semibold text-center rounded-xl bg-gradient-to-r from-orange-500 via-rose-500 to-violet-600 text-white">
+                      Get Started Free
+                    </Link>
+                  </>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </nav>
   );
 };

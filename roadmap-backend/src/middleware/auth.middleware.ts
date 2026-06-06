@@ -46,13 +46,11 @@ const isAuthenticated = async (
 
 
 
-export const isverified = () => {
-  (req: reqwithuser, res: Response, next: NextFunction) => {
-    if (req.user?.isVerified === false) {
-      return next(new Errorhandler(400, "Please verify your account first"));
-    }
-    next();
-  };
+export const isverified = (req: reqwithuser, res: Response, next: NextFunction) => {
+  if (req.user?.isVerified === false) {
+    return next(new Errorhandler(400, "Please verify your account first"));
+  }
+  next();
 };
 
 

@@ -1,479 +1,327 @@
-
 import type React from "react"
 import { useEffect, useState, useMemo } from "react"
 import { useAppDispatch, useAppSelector } from "@/hooks/useAppDispatch"
 import { getRoadmaps, getTrendingRoadmaps, seedRoadmaps } from "@/state/slices/roadmapSlice"
 import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Skeleton } from "@/components/ui/skeleton"
 import {
-  Search,
-  Filter,
-  ChevronLeft,
-  ChevronRight,
-  Clock,
-  Star,
-  Users,
-  Eye,
-  Code,
-  Server,
-  Smartphone,
-  Database,
-  Palette,
-  BarChart3,
-  Shield,
-  Cloud,
-  Coins,
-  MoreHorizontal,
-  Sparkles,
+  Search, Filter, ChevronLeft, ChevronRight, Clock, Star, Eye, Code, Server,
+  Smartphone, Database, Palette, BarChart3, Shield, Cloud, Coins, MoreHorizontal,
+  Sparkles, Users,
 } from "lucide-react"
+import { motion } from "framer-motion"
 import { useNavigate, useLocation } from "react-router-dom"
 import type { IRoadmap } from "@/types/user/roadmap/roadmap.types"
 
-
-// Category icons mapping
-const categoryIcons = {
-  frontend: Code,
-  backend: Server,
-  "web-development": Code,
-  devops: Cloud,
-  mobile: Smartphone,
-  "mobile-development": Smartphone,
-  "data-science": Database,
-  design: Palette,
-  "product-management": BarChart3,
-  cybersecurity: Shield,
-  cloud: Cloud,
-  blockchain: Coins,
-  ai: Database,
-  "machine-learning": Database,
-  programming: Code,
-  other: MoreHorizontal,
+const categoryIcons: Record<string, any> = {
+  frontend: Code, backend: Server, "web-development": Code, devops: Cloud,
+  mobile: Smartphone, "mobile-development": Smartphone, "data-science": Database,
+  design: Palette, "product-management": BarChart3, cybersecurity: Shield,
+  cloud: Cloud, blockchain: Coins, ai: Database, "machine-learning": Database,
+  programming: Code, other: MoreHorizontal,
 }
 
-// Difficulty colors
-const difficultyColors = {
-  beginner: "bg-green-500/20 text-green-400 border-green-500/30",
-  intermediate: "bg-yellow-500/20 text-yellow-400 border-yellow-500/30",
-  advanced: "bg-orange-500/20 text-orange-400 border-orange-500/30",
-  expert: "bg-red-500/20 text-red-400 border-red-500/30",
+const difficultyConfig: Record<string, { label: string; cls: string }> = {
+  beginner:     { label: "Beginner",     cls: "bg-green-500/15 text-green-400 border-green-500/25" },
+  intermediate: { label: "Intermediate", cls: "bg-yellow-500/15 text-yellow-400 border-yellow-500/25" },
+  advanced:     { label: "Advanced",     cls: "bg-orange-500/15 text-orange-400 border-orange-500/25" },
+  expert:       { label: "Expert",       cls: "bg-red-500/15 text-red-400 border-red-500/25" },
 }
 
-// Loading skeleton component
-const RoadmapSkeleton = () => (
-  <Card className="bg-slate-800/50 border-slate-700/50 backdrop-blur-sm">
-    <CardHeader className="space-y-3">
-      <div className="flex items-start justify-between">
-        <Skeleton className="h-6 w-3/4 bg-slate-700" />
-        <Skeleton className="h-5 w-16 bg-slate-700" />
-      </div>
-      <Skeleton className="h-4 w-full bg-slate-700" />
-      <div className="flex items-center gap-2">
-        <Skeleton className="h-4 w-4 bg-slate-700" />
-        <Skeleton className="h-4 w-20 bg-slate-700" />
-      </div>
-    </CardHeader>
-    <CardContent className="space-y-3">
-      <div className="flex flex-wrap gap-2">
-        {[1, 2, 3].map((i) => (
-          <Skeleton key={i} className="h-6 w-16 bg-slate-700" />
-        ))}
-      </div>
-      <div className="flex items-center justify-between">
-        <Skeleton className="h-4 w-24 bg-slate-700" />
-        <div className="flex items-center gap-4">
-          <Skeleton className="h-4 w-12 bg-slate-700" />
-          <Skeleton className="h-4 w-12 bg-slate-700" />
-        </div>
-      </div>
-    </CardContent>
-  </Card>
-)
-
-// Road-themed loading animation
-const RoadLoadingAnimation = () => (
-  <div className="flex flex-col items-center justify-center py-16 space-y-6">
-    <div className="relative">
-      {/* Road */}
-      <div className="w-64 h-4 bg-slate-700 rounded-full relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-500/20 via-blue-400/40 to-blue-500/20 animate-pulse" />
-        {/* Road lines */}
-        <div className="absolute top-1/2 left-0 w-full h-0.5 bg-slate-500 transform -translate-y-1/2">
-          <div className="w-full h-full bg-gradient-to-r from-transparent via-slate-300 to-transparent animate-pulse" />
-        </div>
-      </div>
-
-      {/* Moving car */}
-      <div className="absolute -top-2 left-0 w-6 h-4 bg-blue-500 rounded-sm animate-bounce">
-        <div className="absolute -top-1 left-1 w-4 h-2 bg-blue-400 rounded-sm" />
-        <div className="absolute -bottom-1 left-0 w-1.5 h-1.5 bg-slate-800 rounded-full" />
-        <div className="absolute -bottom-1 right-0 w-1.5 h-1.5 bg-slate-800 rounded-full" />
+const SkeletonCard = () => (
+  <div className="glass rounded-2xl p-6 animate-pulse">
+    <div className="flex gap-3 mb-4">
+      <div className="w-10 h-10 rounded-xl bg-white/[0.08]" />
+      <div className="flex-1 space-y-2">
+        <div className="h-4 bg-white/[0.08] rounded w-3/4" />
+        <div className="h-3 bg-white/[0.06] rounded w-1/2" />
       </div>
     </div>
-
-    <div className="text-center space-y-2">
-      <h3 className="text-lg font-semibold text-slate-200">Loading Roadmaps</h3>
-      <p className="text-sm text-slate-400">Mapping your learning journey...</p>
+    <div className="space-y-2 mb-4">
+      <div className="h-3 bg-white/[0.06] rounded" />
+      <div className="h-3 bg-white/[0.06] rounded w-4/5" />
+    </div>
+    <div className="flex gap-2">
+      {[1,2,3].map(i => <div key={i} className="h-5 w-14 bg-white/[0.06] rounded-full" />)}
     </div>
   </div>
 )
 
 const Roadmaps: React.FunctionComponent = () => {
-  const navigate = useNavigate();
+  const navigate = useNavigate()
   const dispatch = useAppDispatch()
-  const [page, setPage] = useState<number>(1)
-  const [searchTerm, setSearchTerm] = useState<string>("")
-  const [selectedCategory, setSelectedCategory] = useState<string>("all")
-  const [selectedDifficulty, setSelectedDifficulty] = useState<string>("all")
-  const [sortBy, setSortBy] = useState<string>("newest")
+  const [page, setPage] = useState(1)
+  const [searchTerm, setSearchTerm] = useState("")
+  const [selectedCategory, setSelectedCategory] = useState("all")
+  const [selectedDifficulty, setSelectedDifficulty] = useState("all")
+  const [sortBy, setSortBy] = useState("newest")
   const [seeded, setSeeded] = useState(false)
 
-  const { roadmaps, trendingRoadmaps, isLoading, paginationMeta } = useAppSelector((state) => state.roadmap)
+  const { roadmaps, trendingRoadmaps, isLoading, paginationMeta } = useAppSelector((s) => s.roadmap)
+  const location = useLocation()
 
-  const location = useLocation();
-
-  // Initialize searchTerm from query param 'q'
   useEffect(() => {
     const params = new URLSearchParams(location.search)
     const q = params.get("q") || ""
-    if (q !== searchTerm) {
-      setSearchTerm(q)
-      setPage(1)
-    }
+    if (q !== searchTerm) { setSearchTerm(q); setPage(1) }
   }, [location.search])
 
-  // Filter and sort roadmaps
-  const filteredAndSortedRoadmaps = useMemo(() => {
-    // Use roadmaps if available, else use trending
-    const source = roadmaps.length > 0 ? roadmaps : trendingRoadmaps;
-    
-    const filtered = source.filter((roadmap: IRoadmap) => {
-      const matchesSearch =
-        roadmap.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        roadmap.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        roadmap.tags?.some((tag) => tag.toLowerCase().includes(searchTerm.toLowerCase()))
-
-      const matchesCategory = selectedCategory === "all" || roadmap.category === selectedCategory
-      const matchesDifficulty = selectedDifficulty === "all" || roadmap.difficulty === selectedDifficulty
-
-      return matchesSearch && matchesCategory && matchesDifficulty
-    })
-
-    // Sort roadmaps
-    switch (sortBy) {
-      case "newest":
-        filtered.sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime())
-        break
-      case "oldest":
-        filtered.sort((a, b) => new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime())
-        break
-      case "popular":
-        filtered.sort((a, b) => (b.stats?.views || 0) - (a.stats?.views || 0))
-        break
-      case "rating":
-        filtered.sort((a, b) => (b.stats?.averageRating || 0) - (a.stats?.averageRating || 0))
-        break
-      default:
-        break
-    }
-
-    return filtered
-  }, [roadmaps, trendingRoadmaps, searchTerm, selectedCategory, selectedDifficulty, sortBy])
-
   useEffect(() => {
-    document.title = "Roadmaps"
-    
-    // Fetch roadmaps
+    document.title = "Roadmaps — RoadMapper"
     dispatch(getRoadmaps(page))
       .unwrap()
       .then((data) => {
-        // If no roadmaps, try to seed and fetch trending
         if ((!data?.roadmaps || data.roadmaps.length === 0) && !seeded) {
-          setSeeded(true);
+          setSeeded(true)
           dispatch(seedRoadmaps()).then(() => {
-            dispatch(getTrendingRoadmaps());
-            dispatch(getRoadmaps(1)); // Refetch after seed
-          });
+            dispatch(getTrendingRoadmaps())
+            dispatch(getRoadmaps(1))
+          })
         }
       })
-      .catch((error) => {
-        console.error("Failed to fetch roadmaps:", error)
-        // Try trending as fallback
-        dispatch(getTrendingRoadmaps());
-      })
-      
-    // Also fetch trending
-    dispatch(getTrendingRoadmaps());
+      .catch(() => dispatch(getTrendingRoadmaps()))
+    dispatch(getTrendingRoadmaps())
   }, [dispatch, page])
 
-  const handlePreviousPage = () => {
-    if (page > 1) {
-      setPage(page - 1)
+  const filtered = useMemo(() => {
+    const source = roadmaps.length > 0 ? roadmaps : trendingRoadmaps
+    const f = source.filter((r: IRoadmap) => {
+      const q = searchTerm.toLowerCase()
+      const matchSearch = r.title.toLowerCase().includes(q) ||
+        r.description.toLowerCase().includes(q) ||
+        r.tags?.some((t) => t.toLowerCase().includes(q))
+      return matchSearch &&
+        (selectedCategory === "all" || r.category === selectedCategory) &&
+        (selectedDifficulty === "all" || r.difficulty === selectedDifficulty)
+    })
+    switch (sortBy) {
+      case "newest":  f.sort((a, b) => new Date(b.createdAt||0).getTime() - new Date(a.createdAt||0).getTime()); break
+      case "oldest":  f.sort((a, b) => new Date(a.createdAt||0).getTime() - new Date(b.createdAt||0).getTime()); break
+      case "popular": f.sort((a, b) => (b.stats?.views||0) - (a.stats?.views||0)); break
+      case "rating":  f.sort((a, b) => (b.stats?.averageRating||0) - (a.stats?.averageRating||0)); break
     }
-  }
+    return f
+  }, [roadmaps, trendingRoadmaps, searchTerm, selectedCategory, selectedDifficulty, sortBy])
 
-  const handleNextPage = () => {
-    if (paginationMeta && page < paginationMeta.totalPages) {
-      setPage(page + 1)
-    }
-  }
+  const formatDuration = (d?: { value?: number; unit?: string } | null) =>
+    d?.value != null ? `${d.value} ${d.unit || "weeks"}` : "Self-paced"
 
-  const formatDuration = (duration?: { value?: number; unit?: string } | null) => {
-    if (!duration || duration.value === undefined || duration.value === null) {
-      return "Self-paced"
-    }
-    const unit = duration.unit || "weeks"
-    return `${duration.value} ${unit}`
-  }
-
-  const getCategoryIcon = (category: string) => {
-    const IconComponent = categoryIcons[category as keyof typeof categoryIcons] || MoreHorizontal
-    return <IconComponent className="w-4 h-4" />
+  const getCategoryIcon = (cat: string) => {
+    const Icon = categoryIcons[cat] || MoreHorizontal
+    return <Icon className="w-4 h-4" />
   }
 
   return (
-    <div className="min-h-screen  bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-      <div className="container mx-auto px-4 py-8">
+    <div className="min-h-screen bg-background">
+      {/* Ambient glows */}
+      <div className="pointer-events-none fixed inset-0 overflow-hidden -z-10">
+        <div className="absolute top-0 right-0 w-[600px] h-[500px] rounded-full bg-orange-500/[0.04] blur-[120px]" />
+        <div className="absolute bottom-0 left-0 w-[500px] h-[500px] rounded-full bg-violet-600/[0.04] blur-[110px]" />
+      </div>
+
+      <div className="max-w-7xl mx-auto px-5 md:px-8 py-10">
+
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-sky-400 mb-2">Trending Roadmaps</h1>
-          <p className="text-slate-300">Discover curated learning paths to advance your skills</p>
-        </div>
+        <motion.div
+          className="mb-10"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+        >
+          <p className="text-xs font-semibold tracking-widest uppercase text-orange-400/70 mb-2">Explore</p>
+          <h1 className="text-4xl md:text-5xl font-bold text-foreground mb-2" style={{ fontFamily: 'Syne, sans-serif' }}>
+            Learning <span className="text-gradient-brand">Roadmaps</span>
+          </h1>
+          <p className="text-muted-foreground">Discover curated learning paths to advance your skills</p>
+        </motion.div>
 
-        {/* Search and Filters */}
-        <div className="mb-8 space-y-4">
-          <div className="flex flex-col lg:flex-row gap-4">
-            {/* Search */}
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
-              <Input
-                placeholder="Search roadmaps, tags, or descriptions..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 bg-slate-800/50 border-slate-700 text-slate-200 placeholder-slate-400 focus:border-blue-500"
-              />
-            </div>
-
-            {/* Filters */}
-            <div className="flex flex-wrap gap-3">
-              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                <SelectTrigger className="w-40 bg-slate-800/50 border-slate-700 text-slate-200">
-                  <Filter className="w-4 h-4 mr-2" />
-                  <SelectValue placeholder="Category" />
-                </SelectTrigger>
-                <SelectContent className="bg-slate-800 border-slate-700">
-                  <SelectItem value="all">All Categories</SelectItem>
-                  <SelectItem value="web-development">Web Development</SelectItem>
-                  <SelectItem value="frontend">Frontend</SelectItem>
-                  <SelectItem value="backend">Backend</SelectItem>
-                  <SelectItem value="mobile-development">Mobile Development</SelectItem>
-                  <SelectItem value="data-science">Data Science</SelectItem>
-                  <SelectItem value="ai">AI</SelectItem>
-                  <SelectItem value="machine-learning">Machine Learning</SelectItem>
-                  <SelectItem value="devops">DevOps</SelectItem>
-                  <SelectItem value="cloud">Cloud</SelectItem>
-                  <SelectItem value="programming">Programming</SelectItem>
-                  <SelectItem value="cybersecurity">Cybersecurity</SelectItem>
-                  <SelectItem value="design">Design</SelectItem>
-                  <SelectItem value="blockchain">Blockchain</SelectItem>
-                  <SelectItem value="other">Other</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select value={selectedDifficulty} onValueChange={setSelectedDifficulty}>
-                <SelectTrigger className="w-36 bg-slate-800/50 border-slate-700 text-slate-200">
-                  <SelectValue placeholder="Difficulty" />
-                </SelectTrigger>
-                <SelectContent className="bg-slate-800 border-slate-700">
-                  <SelectItem value="all">All Levels</SelectItem>
-                  <SelectItem value="beginner">Beginner</SelectItem>
-                  <SelectItem value="intermediate">Intermediate</SelectItem>
-                  <SelectItem value="advanced">Advanced</SelectItem>
-                  <SelectItem value="expert">Expert</SelectItem>
-                </SelectContent>
-              </Select>
-
-              <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="w-32 bg-slate-800/50 border-slate-700 text-slate-200">
-                  <SelectValue placeholder="Sort by" />
-                </SelectTrigger>
-                <SelectContent className="bg-slate-800 border-slate-700">
-                  <SelectItem value="newest">Newest</SelectItem>
-                  <SelectItem value="oldest">Oldest</SelectItem>
-                  <SelectItem value="popular">Popular</SelectItem>
-                  <SelectItem value="rating">Rating</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+        {/* Filters */}
+        <motion.div
+          className="mb-8 flex flex-col lg:flex-row gap-3"
+          initial={{ opacity: 0, y: 16 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.1 }}
+        >
+          <div className="relative flex-1">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+            <Input
+              placeholder="Search roadmaps, tags, or descriptions..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-11 h-11 bg-card border-border text-foreground placeholder:text-muted-foreground rounded-xl"
+            />
           </div>
-        </div>
+          <div className="flex flex-wrap gap-3">
+            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+              <SelectTrigger className="w-42 h-11 bg-card border-border text-foreground rounded-xl">
+                <Filter className="w-4 h-4 mr-2 text-muted-foreground" />
+                <SelectValue placeholder="Category" />
+              </SelectTrigger>
+              <SelectContent className="bg-card border-border text-foreground">
+                {["all","web-development","frontend","backend","mobile-development","data-science","ai","machine-learning","devops","cloud","programming","cybersecurity","design","blockchain","other"].map(v => (
+                  <SelectItem key={v} value={v}>{v === "all" ? "All Categories" : v.replace(/-/g, " ").replace(/\b\w/g, c => c.toUpperCase())}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={selectedDifficulty} onValueChange={setSelectedDifficulty}>
+              <SelectTrigger className="w-36 h-11 bg-card border-border text-foreground rounded-xl">
+                <SelectValue placeholder="Difficulty" />
+              </SelectTrigger>
+              <SelectContent className="bg-card border-border text-foreground">
+                {["all","beginner","intermediate","advanced","expert"].map(v => (
+                  <SelectItem key={v} value={v}>{v === "all" ? "All Levels" : v.charAt(0).toUpperCase() + v.slice(1)}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Select value={sortBy} onValueChange={setSortBy}>
+              <SelectTrigger className="w-32 h-11 bg-card border-border text-foreground rounded-xl">
+                <SelectValue placeholder="Sort by" />
+              </SelectTrigger>
+              <SelectContent className="bg-card border-border text-foreground">
+                <SelectItem value="newest">Newest</SelectItem>
+                <SelectItem value="oldest">Oldest</SelectItem>
+                <SelectItem value="popular">Popular</SelectItem>
+                <SelectItem value="rating">Rating</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </motion.div>
 
-        {/* Loading State */}
+        {/* Loading */}
         {isLoading ? (
-          <div className="space-y-6">
-            <RoadLoadingAnimation />
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {[...Array(6)].map((_, index) => (
-                <RoadmapSkeleton key={index} />
-              ))}
-            </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {[...Array(6)].map((_, i) => <SkeletonCard key={i} />)}
           </div>
         ) : (
           <>
-            {/* Results Count */}
-            <div className="mb-6">
-              <p className="text-slate-400">
-                Showing {filteredAndSortedRoadmaps.length} of {roadmaps.length} roadmaps
-              </p>
-            </div>
+            <p className="text-sm text-muted-foreground mb-5">
+              Showing <span className="text-foreground font-medium">{filtered.length}</span> roadmaps
+            </p>
 
-            {/* Roadmaps Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-              {filteredAndSortedRoadmaps.map((roadmap: IRoadmap) => (
-                <Card
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 mb-10">
+              {filtered.map((roadmap: IRoadmap, idx) => (
+                <motion.div
                   key={roadmap._id}
-                  onClick={()=>navigate(`/details/${roadmap._id}`)}
-                  className="bg-slate-800/50 border-slate-700/50 backdrop-blur-sm hover:bg-slate-700/50 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-blue-500/10 group cursor-pointer overflow-hidden"
+                  initial={{ opacity: 0, y: 24 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.4, delay: idx * 0.04 }}
+                  onClick={() => navigate(`/details/${roadmap._id}`)}
+                  whileHover={{ y: -4, scale: 1.01 }}
+                  whileTap={{ scale: 0.98 }}
+                  className="glass card-gradient-border rounded-2xl overflow-hidden cursor-pointer group"
                 >
-                  {/* Cover Image */}
                   {roadmap.coverImage?.url && (
-                    <div className="relative h-32 w-full overflow-hidden">
-                      <img 
-                        src={roadmap.coverImage.url} 
+                    <div className="relative h-36 overflow-hidden">
+                      <img
+                        src={roadmap.coverImage.url}
                         alt={roadmap.title}
-                        className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                        onError={(e) => {
-                          (e.target as HTMLImageElement).style.display = 'none';
-                        }}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-slate-800/90 to-transparent" />
+                      <div className="absolute inset-0 bg-gradient-to-t from-background/80 to-transparent" />
                     </div>
                   )}
-                  
-                  <CardHeader className="space-y-3">
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-2">
-                        <div className="p-2 bg-blue-500/20 rounded-lg text-blue-400">
+
+                  <div className="p-6">
+                    <div className="flex items-start justify-between mb-3 gap-2">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-9 h-9 rounded-lg bg-orange-500/[0.12] border border-orange-500/20 flex items-center justify-center text-orange-400 flex-shrink-0">
                           {getCategoryIcon(roadmap.category)}
                         </div>
-                        <div>
-                          <CardTitle className="text-lg text-sky-400 group-hover:text-sky-300 transition-colors">
+                        <div className="min-w-0">
+                          <h3 className="text-base font-semibold text-foreground group-hover:text-orange-400 transition-colors line-clamp-1" style={{ fontFamily: 'Syne, sans-serif' }}>
                             {roadmap.title}
-                          </CardTitle>
+                          </h3>
                           {roadmap.isFeatured && (
-                            <Badge className="mt-1 bg-yellow-500/20 text-yellow-400 border-yellow-500/30">
-                              Featured
-                            </Badge>
+                            <span className="text-[10px] font-medium text-amber-400/80 uppercase tracking-wider">Featured</span>
                           )}
                         </div>
                       </div>
                       {roadmap.difficulty && (
-                        <Badge className={`${difficultyColors[roadmap.difficulty]} capitalize`}>
+                        <Badge className={`${difficultyConfig[roadmap.difficulty]?.cls} text-xs flex-shrink-0 capitalize border`}>
                           {roadmap.difficulty}
                         </Badge>
                       )}
                     </div>
 
-                    <CardDescription className="text-slate-300 line-clamp-2">{roadmap.description}</CardDescription>
+                    <p className="text-sm text-muted-foreground line-clamp-2 mb-4 leading-relaxed">
+                      {roadmap.description}
+                    </p>
 
-                    <div className="flex items-center gap-2 text-sm text-slate-400">
-                      <Clock className="w-4 h-4" />
+                    <div className="flex items-center gap-1.5 text-xs text-muted-foreground mb-4">
+                      <Clock className="w-3.5 h-3.5" />
                       <span>{formatDuration(roadmap.estimatedDuration)}</span>
                     </div>
-                  </CardHeader>
 
-                  <CardContent className="space-y-4">
-                    {/* Tags */}
                     {roadmap.tags && roadmap.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-2">
-                        {roadmap.tags.slice(0, 3).map((tag, index) => (
-                          <Badge
-                            key={index}
-                            variant="outline"
-                            className="text-xs bg-blue-500/10 text-blue-400 border-blue-500/30"
-                          >
+                      <div className="flex flex-wrap gap-1.5 mb-4">
+                        {roadmap.tags.slice(0, 3).map((tag, i) => (
+                          <span key={i} className="text-[11px] px-2 py-0.5 rounded-full bg-violet-500/[0.1] text-violet-400 border border-violet-500/20">
                             {tag}
-                          </Badge>
+                          </span>
                         ))}
                         {roadmap.tags.length > 3 && (
-                          <Badge variant="outline" className="text-xs bg-slate-700/50 text-slate-400 border-slate-600">
+                          <span className="text-[11px] px-2 py-0.5 rounded-full bg-border/50 text-muted-foreground">
                             +{roadmap.tags.length - 3}
-                          </Badge>
+                          </span>
                         )}
                       </div>
                     )}
 
-                    {/* Stats */}
-                    <div className="flex items-center justify-between text-sm text-slate-400">
+                    <div className="flex items-center justify-between text-xs text-muted-foreground pt-3 border-t border-border">
                       <div className="flex items-center gap-1">
-                        <Users className="w-4 h-4" />
+                        <Users className="w-3.5 h-3.5" />
                         <span>{roadmap.contributor?.username || "AI Generated"}</span>
                       </div>
-
-                      <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-1">
-                          <Eye className="w-4 h-4" />
-                          <span>{roadmap.stats?.views || 0}</span>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          <Star className="w-4 h-4" />
-                          <span>{roadmap.stats?.averageRating?.toFixed(1) || "4.5"}</span>
-                        </div>
+                      <div className="flex items-center gap-3">
+                        <span className="flex items-center gap-1"><Eye className="w-3.5 h-3.5" />{roadmap.stats?.views || 0}</span>
+                        <span className="flex items-center gap-1"><Star className="w-3.5 h-3.5 text-amber-400" />{roadmap.stats?.averageRating?.toFixed(1) || "4.5"}</span>
                       </div>
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                </motion.div>
               ))}
             </div>
 
-            {/* Empty State */}
-            {filteredAndSortedRoadmaps.length === 0 && (
-              <div className="text-center py-16">
-                <Sparkles className="w-16 h-16 text-blue-500 mx-auto mb-4" />
-                <h3 className="text-xl font-semibold text-slate-300 mb-2">No roadmaps found</h3>
-                <p className="text-slate-400 mb-6">Be the first to create an AI-powered roadmap!</p>
-                <Button 
+            {/* Empty */}
+            {filtered.length === 0 && (
+              <div className="text-center py-20">
+                <div className="w-16 h-16 rounded-2xl bg-orange-500/10 border border-orange-500/20 flex items-center justify-center mx-auto mb-5">
+                  <Sparkles className="w-8 h-8 text-orange-400" />
+                </div>
+                <h3 className="text-xl font-semibold text-foreground mb-2" style={{ fontFamily: 'Syne, sans-serif' }}>No roadmaps found</h3>
+                <p className="text-muted-foreground mb-6">Be the first to create an AI-powered roadmap</p>
+                <button
                   onClick={() => navigate('/generate-roadmap')}
-                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 text-sm font-semibold rounded-xl bg-gradient-to-r from-orange-500 via-rose-500 to-violet-600 text-white shadow-lg shadow-orange-500/20 hover:opacity-90"
                 >
-                  <Sparkles className="w-4 h-4 mr-2" />
-                  Generate Roadmap
-                </Button>
+                  <Sparkles className="w-4 h-4" /> Generate Roadmap
+                </button>
               </div>
             )}
 
             {/* Pagination */}
             {paginationMeta && paginationMeta.totalPages > 1 && (
               <div className="flex items-center justify-between">
-                <div className="text-sm text-slate-400">
-                  Page {page} of {paginationMeta.totalPages} ({paginationMeta.totalItems} total items)
-                </div>
-
+                <p className="text-sm text-muted-foreground">
+                  Page {page} of {paginationMeta.totalPages}
+                </p>
                 <div className="flex items-center gap-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handlePreviousPage}
+                  <button
+                    onClick={() => page > 1 && setPage(page - 1)}
                     disabled={page <= 1}
-                    className="bg-slate-800/50 border-slate-700 text-slate-200 hover:bg-slate-700/50 disabled:opacity-50"
+                    className="flex items-center gap-1 px-4 py-2 text-sm font-medium rounded-xl glass border border-border text-foreground hover:bg-foreground/[0.06] disabled:opacity-40 transition-colors"
                   >
-                    <ChevronLeft className="w-4 h-4 mr-1" />
-                    Previous
-                  </Button>
-
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleNextPage}
+                    <ChevronLeft className="w-4 h-4" /> Previous
+                  </button>
+                  <button
+                    onClick={() => page < paginationMeta.totalPages && setPage(page + 1)}
                     disabled={page >= paginationMeta.totalPages}
-                    className="bg-slate-800/50 border-slate-700 text-slate-200 hover:bg-slate-700/50 disabled:opacity-50"
+                    className="flex items-center gap-1 px-4 py-2 text-sm font-medium rounded-xl bg-gradient-to-r from-orange-500 to-violet-600 text-white disabled:opacity-40 transition-opacity"
                   >
-                    Next
-                    <ChevronRight className="w-4 h-4 ml-1" />
-                  </Button>
+                    Next <ChevronRight className="w-4 h-4" />
+                  </button>
                 </div>
               </div>
             )}
