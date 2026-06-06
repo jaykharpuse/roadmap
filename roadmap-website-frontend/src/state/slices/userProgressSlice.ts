@@ -34,7 +34,7 @@ export const startRoadmap = createAsyncThunk(
       );
       return response.data;
     } catch (error: any) {
-      console.log("this is an error inside start roadmap :", error);
+      console.error("Error:", error);
       return rejectWithValue(
         error.response?.data || "Failed to fetch user progress"
       );
@@ -50,7 +50,7 @@ export const getUserRoadmapProgressForDashBoard = createAsyncThunk(
       );
       return response.data;
     } catch (error: any) {
-      console.log("this is an error inside start roadmap :", error);
+      console.error("Error:", error);
       return rejectWithValue(
         error.response?.data || "Failed to fetch user progress"
       );

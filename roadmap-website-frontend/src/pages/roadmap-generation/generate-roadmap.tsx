@@ -104,7 +104,6 @@ const GenerateRoadmap: React.FC = () => {
     }
 
     const handleProgressUpdate = ({ step, progress, error: progressError }: ProgressType) => {
-      console.log('📊 Progress update:', { step, progress, error: progressError })
       setCurrentProgress({ step, progress, error: progressError })
 
       const stepIndex = progressSteps.findIndex((s) => s.key === step)
@@ -216,7 +215,6 @@ const GenerateRoadmap: React.FC = () => {
       const errorMsg = typeof error === "string" ? error : lastGenerationError || "Failed to generate roadmap"
       const friendlyMsg = getErrorMessage(errorMsg)
       toast.error(friendlyMsg)
-      console.error('Generation error:', error)
     }
   }
 

@@ -74,19 +74,21 @@ export const io = new SocketIOServer(server, {
 
 
 io.on("connection", (socket) => {
-  console.log("Socket connected:", socket.id);
-
-   socket.on("registerUser", (userId: string) => {
+  socket.on("registerUser", (userId: string) => {
     if (userId) {
       userSocketMap.set(userId, socket.id);
       socket.join(`user_${userId}`);
-      console.log(`User ${userId} registered with socket ${socket.id}`);
     }
   });
 
-
   socket.on("disconnect", () => {
-    console.log("Socket disconnected:", socket.id);
+    // clean up user socket map on disconnect
+    for (const [userId, socketId] of userSocketMap.entries()) {
+      if (socketId === socket.id) {
+        userSocketMap.delete(userId);
+        break;
+      }
+    }
   });
 });
 

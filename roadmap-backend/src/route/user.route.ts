@@ -8,6 +8,7 @@ import {
   registerUser,
   Resetpassword,
   verifyuser,
+  contactSupport,
 } from "../controller/user.controller";
 import upload from "../middleware/multer.middleware";
 import { isAuthenticated } from "../middleware/auth.middleware";
@@ -21,5 +22,6 @@ userRouter.post("/forgot-password", forgotPassword); //marked
 userRouter.put("/reset-password/:token", Resetpassword); //marked
 userRouter.get("/me", isAuthenticated, getMyProfile);
 userRouter.put("/me", isAuthenticated, upload.single("profileUrl"), updateMyProfile);
+userRouter.post("/contact", contactSupport);
 
 export default userRouter;

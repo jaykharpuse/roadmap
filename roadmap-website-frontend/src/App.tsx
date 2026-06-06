@@ -30,7 +30,6 @@ function App() {
       <Navbar />
       <Routes>
         <Route path="/" element={<Home />} />
-        <Route path="/roadmap" element={<Roadmaps />} />
         <Route path="/signup" element={<Signup />} />
         <Route path="/verify/:email" element={<Verify />} />
         <Route path="/login" element={<Login />} />

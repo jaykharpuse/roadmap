@@ -17,24 +17,15 @@ export const socket: Socket = io(apiBaseUrl, {
 let isRegistered = false;
 let pendingUserId: string | null = null;
 
-// Socket event listeners for debugging
 socket.on('connect', () => {
-  console.log('✅ Socket connected:', socket.id);
-  // Re-register user if we had a pending registration
   if (pendingUserId) {
     socket.emit('registerUser', pendingUserId);
     isRegistered = true;
-    console.log('🔄 Re-registered user after reconnect:', pendingUserId);
   }
 });
 
-socket.on('disconnect', (reason) => {
-  console.log('❌ Socket disconnected:', reason);
+socket.on('disconnect', () => {
   isRegistered = false;
-});
-
-socket.on('connect_error', (error) => {
-  console.warn('⚠️ Socket connection error:', error.message);
 });
 
 // Register user with socket when authenticated
@@ -46,7 +37,6 @@ export const registerUserSocket = (userId: string) => {
   if (socket.connected) {
     socket.emit('registerUser', userId);
     isRegistered = true;
-    console.log('👤 User registered with socket:', userId);
   } else {
     // Connect and register
     connectSocket();
@@ -63,7 +53,6 @@ export const isSocketReady = () => socket.connected && isRegistered;
 export const connectSocket = () => {
   if (!socket.connected) {
     socket.connect();
-    console.log('🔌 Connecting socket...');
   }
 };
 
@@ -73,7 +62,6 @@ export const disconnectSocket = () => {
     socket.disconnect();
     isRegistered = false;
     pendingUserId = null;
-    console.log('🔌 Socket disconnected manually');
   }
 };
 

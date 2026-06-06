@@ -103,8 +103,6 @@ export const updateNodeProgress = async (req: reqwithuser, res: Response) => {
       return res.status(400).json({ message: "Status is required" });
     }
 
-    console.log("Params:", { roadmapId, nodeId, userId, status });
-
     let progress = await UserProgress.findOne({
       user: new mongoose.Types.ObjectId(userId),
       roadmap: new mongoose.Types.ObjectId(roadmapId),

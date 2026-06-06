@@ -15,7 +15,7 @@ export default function Dashboard() {
 
   useEffect(() => {
     document.title = "Progress Dashboard — RoadMapper"
-    dispatch(getUserRoadmapProgressForDashBoard()).unwrap()
+    dispatch(getUserRoadmapProgressForDashBoard()).unwrap().catch(() => {})
   }, [])
 
   return (

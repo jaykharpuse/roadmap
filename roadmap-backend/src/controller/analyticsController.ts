@@ -59,7 +59,7 @@ export const upsertAnalytics = async(req: Request, res: Response) =>{
 
           res.status(200).json(updateAnalytics); 
       } catch(err){
-        console.log(err);
+        console.error(err);
          res.status(500).json({
              
              error: 'failed to upsert analytics ', 

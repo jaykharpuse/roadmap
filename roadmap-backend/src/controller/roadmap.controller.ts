@@ -6,7 +6,6 @@ import { reqwithuser } from "../middleware/auth.middleware";
 import Errorhandler from "../util/Errorhandler.util";
 import Review from "../models/review.model";
 import "../models/resource.model";
-import { error } from "console";
 import { generateRoadmap } from "../services/generateroadmap_service";
 import Resource from "../models/resource.model";
 import { userSocketMap } from "../index";
@@ -495,7 +494,10 @@ export const updateRoadmap = async (
       (roadmap.contributor?.toString() !== req.user._id.toString() &&
         req.user.Role !== "admin")
     ) {
-      console.error(error);
+      console.error("Unauthorized to update roadmap", {
+        roadmapId,
+        userId: req.user?._id,
+      });
       return next(new Errorhandler(403, "Unauthorized to update roadmap"));
     }
 

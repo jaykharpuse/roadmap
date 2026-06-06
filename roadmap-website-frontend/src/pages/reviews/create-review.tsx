@@ -16,6 +16,7 @@ import { X, Plus, Star } from "lucide-react";
 import { useAuth } from "@/contexts/authContext";
 import { useAppDispatch } from "@/hooks/useAppDispatch";
 import { createReview } from "@/state/slices/reviewSlice";
+import { toast } from "sonner";
 
 interface ReviewModalProps {
   isOpen: boolean;
@@ -87,33 +88,14 @@ export default function ReviewModal({
     if (!validateForm()) return;
 
     setIsSubmitting(true);
-    dispatch(createReview({ ...formData, rating: formData.rating ?? undefined })).unwrap().then(()=>{}).catch(()=>{})
     try {
-      // Mock API call - replace with actual submission logic
-      const reviewData = {
-        ...formData,
-        roadmapId,
-        userId,
-        createdAt: new Date().toISOString(),
-      };
-
-      console.log("Submitting review:", reviewData);
-
-      // Simulate API delay
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-
-      // Reset form and close modal on success
-      setFormData({
-        rating: null,
-        title: "",
-        review: "",
-        pros: [],
-        cons: [],
-      });
+      await dispatch(createReview({ ...formData, rating: formData.rating ?? undefined })).unwrap();
+      toast.success("Review submitted successfully!");
+      setFormData({ rating: null, title: "", review: "", pros: [], cons: [] });
       setErrors({});
       onClose();
-    } catch (error) {
-      console.error("Error submitting review:", error);
+    } catch {
+      toast.error("Failed to submit review. Please try again.");
     } finally {
       setIsSubmitting(false);
     }

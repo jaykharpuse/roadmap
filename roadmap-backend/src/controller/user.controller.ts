@@ -4,13 +4,13 @@ import usermodel, { User } from "../models/usermodel";
 import bcrypt from "bcrypt";
 import sendVerificationMail, {
   sendResetPasswordMail,
+  sendContactFormMail,
 } from "../util/sendmail.util";
 import UploadOnCloudinary from "../util/cloudinary.util";
 import Errorhandler from "../util/Errorhandler.util";
 import sendtoken from "../util/sendtoken";
 import { isverified, reqwithuser } from "../middleware/auth.middleware";
 import { Schema, ObjectId } from "mongoose";
-import { error } from "console";
 export const getMyProfile = catchAsync(
   async (req: reqwithuser, res: Response, next: NextFunction) => {
     const userId = req.user?._id;
@@ -89,7 +89,6 @@ export const registerUser = catchAsync(
   async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { username, email, password,profileUrl,  verifyCodeExpiry, Role, } = req.body;
-      console.log("this is a req.body", req.body);
       const ExistingUser = await usermodel.findOne({
         email,
         isVerified: true,
@@ -128,10 +127,6 @@ export const registerUser = catchAsync(
           const cloudinaryUrl = await UploadOnCloudinary(req.file.path);
 
           const profileUrl = cloudinaryUrl?.secure_url;
-          console.log(
-            "this is a cloudinary and secure url",
-            profileUrl + "     " + cloudinaryUrl
-          );
          
            
 
@@ -223,27 +218,15 @@ export const verifyuser = catchAsync(
 export const Login = catchAsync(async (req, res, next) => {
   try {
     const { email, password } = req.body;
-    console.log("this is a req.body:", req.body);
     if (!email || !password) {
-      console.log("missing credentials"); 
       return next(new Errorhandler(404, "Please Enter credentials"));
     }
     const user = await usermodel.findOne({ email });
     if (!user) {
-      console.log("user not found with email: ", email); 
       return next(new Errorhandler(404, "Invalid credentials"));
     }
 
-     console.log("found user :", {
-        email: user.email, 
-        isVerified: user.isVerified, 
-        hashedPassword: user.password, 
-     }); 
-
-
-
     if (!user.isVerified) {
-      console.log("user not verified"); 
       return next(
         new Errorhandler(
           400,
@@ -253,13 +236,9 @@ export const Login = catchAsync(async (req, res, next) => {
     }
     const isCorrectPassword = await user.comparePassword(password);
     if (!isCorrectPassword) {
-      console.log("password missmatch"); 
       return next(new Errorhandler(404, "Invalid credentials"));
-      
     }
     const token = user.generateToken();
-    console.log("login successful, generated token: ",token); 
-
 
     sendtoken(res, token, 200, user);
   } catch (error: any) {
@@ -335,5 +314,27 @@ export const Resetpassword = catchAsync(
     } catch (error) {
       return next(new Errorhandler(500, "Error password Reset"));
     }
+  }
+);
+
+export const contactSupport = catchAsync(
+  async (req: Request, res: Response, next: NextFunction) => {
+    const { name, email, message } = req.body as {
+      name?: string;
+      email?: string;
+      message?: string;
+    };
+
+    if (!name?.trim() || !email?.trim() || !message?.trim()) {
+      return next(new Errorhandler(400, "Name, email, and message are required"));
+    }
+
+    const result = await sendContactFormMail(name.trim(), email.trim(), "Support Request", message.trim());
+
+    if (!result.success) {
+      return next(new Errorhandler(500, "Failed to send your message. Please try again later."));
+    }
+
+    res.status(200).json({ success: true, message: "Your message has been sent successfully" });
   }
 );

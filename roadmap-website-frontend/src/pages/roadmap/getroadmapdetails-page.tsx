@@ -695,8 +695,7 @@ export default function RoadmapDetailsPage() {
   const location = useLocation()
   const { isAuthenticated } = useAuth()
 
-  const [isLoading] = useState<boolean>(false)
-  const { roadmap: RoadmapDetails } = useAppSelector((state) => state.roadmap)
+  const { roadmap: RoadmapDetails, isLoading } = useAppSelector((state) => state.roadmap)
   const { progress } = useAppSelector((state) => state.userProgress)
   const [userProgress, setUserProgress] = useState(progress)
 
@@ -740,7 +739,6 @@ export default function RoadmapDetailsPage() {
 
   useEffect(() => {
     socket.on("progressUpdated", ({ roadmapId: id, nodeId, status }) => {
-      console.log("this is a socket event ", roadmapId, nodeId, status)
       if (id === roadmapId) {
         setUserProgress((prev) => {
           if (!prev) return prev
@@ -804,7 +802,6 @@ const handleAddBookmark = () => {
 
   const prevBookmarked = isBookmarked;
   setIsBookmarked(true);
-  toast.message("Adding to bookmarks...", { description: "This is an optimistic update." });
 
   dispatch(CreateBookMark(payload as any))
     .unwrap()
@@ -837,8 +834,7 @@ const handleAddBookmark = () => {
     setIsRemoveConfirmOpen(false);
 
     const prevBookmarked = isBookmarked;
-    setIsBookmarked(false); // optimistic update
-    toast.message("Removing bookmark...", { description: "This is an optimistic update." });
+    setIsBookmarked(false);
 
     dispatch(deleteBookmark(roadmapId))
       .unwrap()

@@ -64,7 +64,8 @@ const Roadmaps: React.FunctionComponent = () => {
   useEffect(() => {
     const params = new URLSearchParams(location.search)
     const q = params.get("q") || ""
-    if (q !== searchTerm) { setSearchTerm(q); setPage(1) }
+    setSearchTerm(q)
+    setPage(1)
   }, [location.search])
 
   useEffect(() => {
