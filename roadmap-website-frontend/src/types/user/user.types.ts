@@ -1,14 +1,12 @@
 export interface IUser {
-  _id: string;           
+  _id: string;
   username: string;
   email: string;
-  profileUrl?: string;    
+  profileUrl?: string;
   isVerified: boolean;
   Role: "student" | "admin" | "instructor";
-
-  
-
- 
-  createdAt: string;       
-  updatedAt: string;       
+  googleId?: string;
+  authProvider: "local" | "google" | "both";
+  createdAt: string;
+  updatedAt: string;
 }

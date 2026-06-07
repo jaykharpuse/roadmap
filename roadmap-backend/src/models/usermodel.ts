@@ -5,16 +5,18 @@ import jwt from "jsonwebtoken";
 import { JwtDecodedUser } from "../types/jwtDecodedUser";
 import crypto from "crypto";
 
-export interface User extends Document { 
-  _id: mongoose.Types.ObjectId; 
+export interface User extends Document {
+  _id: mongoose.Types.ObjectId;
   username: string;
   email: string;
-  password: string;
-  profileUrl: string;
-  verifyCode: string;
+  password?: string;
+  profileUrl?: string;
+  verifyCode?: string;
   isVerified: boolean;
-  verifyCodeExpiry: Date;
+  verifyCodeExpiry?: Date;
   Role: "student" | "admin" | "instructor";
+  googleId?: string;
+  authProvider: "local" | "google" | "both";
 
   ResetPasswordToken: string | undefined;
   ResetPasswordTokenExpire: Date | undefined;
@@ -44,7 +46,6 @@ const userSchema = new Schema<User>(
     },
     password: {
       type: String,
-      required: [true, "password is mendatory"],
       minlength: [
         5,
         "your password should be greater than length of 5 characters",
@@ -55,7 +56,6 @@ const userSchema = new Schema<User>(
     },
     verifyCode: {
       type: String,
-      required: [true, "Verify code is mendatory"],
     },
     isVerified: {
       type: Boolean,
@@ -63,14 +63,22 @@ const userSchema = new Schema<User>(
     },
     verifyCodeExpiry: {
       type: Date,
-      required: [true, "verify code date is expiry"],
     },
     Role: {
       type: String,
       enum: ["student", "instructor", "admin"],
       default: "student",
     },
-
+    googleId: {
+      type: String,
+      sparse: true,
+      unique: true,
+    },
+    authProvider: {
+      type: String,
+      enum: ["local", "google", "both"],
+      default: "local",
+    },
     ResetPasswordToken: {
       type: String,
     },
@@ -83,7 +91,7 @@ const userSchema = new Schema<User>(
   }
 );
 userSchema.pre("save", async function (next): Promise<void> {
-  if (this.isModified("password")) {
+  if (this.isModified("password") && this.password) {
     this.password = await bcrypt.hash(this.password, 10);
   }
   next();
@@ -100,6 +108,7 @@ userSchema.methods.generateToken = function (): string {
 userSchema.methods.comparePassword = async function (
   enteredPassword: string
 ): Promise<boolean> {
+  if (!this.password) return false;
   return await bcrypt.compare(enteredPassword, this.password);
 };
 userSchema.methods.ResetToken = function (): void {

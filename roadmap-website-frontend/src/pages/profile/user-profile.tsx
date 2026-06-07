@@ -7,14 +7,19 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   User, Mail, Calendar, Shield, CheckCircle, XCircle,
   Settings, BookOpen, TrendingUp, Bookmark, Clock, Award, Edit2, X, Save,
+  Link2, Link2Off, KeyRound,
 } from "lucide-react";
 import LogoutButton from "@/components/LogoutButton";
 import axiosInstance from "@/helper/axiosInstance";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
+import GoogleAuthButton from "@/components/GoogleAuthButton";
+import { useAppDispatch } from "@/hooks/useAppDispatch";
+import { linkGoogleAccount, unlinkGoogleAccount, setPasswordForGoogleUser } from "@/state/slices/authSlice";
 
 const UserProfile: React.FC = () => {
   const { user, isLoading, isAuthenticated, refreshUser } = useAuth();
+  const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const location = useLocation();
   const [isEditing, setIsEditing] = useState(false);
@@ -22,6 +27,59 @@ const UserProfile: React.FC = () => {
   const [emailInput, setEmailInput] = useState(user?.email || "");
   const fileRef = useRef<HTMLInputElement | null>(null);
   const [saving, setSaving] = useState(false);
+  const [googleLinking, setGoogleLinking] = useState(false);
+  const [googleUnlinking, setGoogleUnlinking] = useState(false);
+  const [showSetPassword, setShowSetPassword] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [settingPassword, setSettingPassword] = useState(false);
+
+  const handleLinkGoogle = async (access_token: string) => {
+    setGoogleLinking(true);
+    dispatch(linkGoogleAccount({ access_token }))
+      .unwrap()
+      .then(async () => {
+        toast.success("Google account linked successfully");
+        await refreshUser();
+      })
+      .catch((err: any) => {
+        toast.error("Failed to link Google account", { description: err });
+      })
+      .finally(() => setGoogleLinking(false));
+  };
+
+  const handleUnlinkGoogle = async () => {
+    setGoogleUnlinking(true);
+    dispatch(unlinkGoogleAccount())
+      .unwrap()
+      .then(async () => {
+        toast.success("Google account unlinked");
+        await refreshUser();
+      })
+      .catch((err: any) => {
+        toast.error("Failed to unlink Google account", { description: err });
+      })
+      .finally(() => setGoogleUnlinking(false));
+  };
+
+  const handleSetPassword = async () => {
+    if (!newPassword || newPassword.length < 5) {
+      toast.error("Password must be at least 5 characters");
+      return;
+    }
+    setSettingPassword(true);
+    dispatch(setPasswordForGoogleUser({ password: newPassword }))
+      .unwrap()
+      .then(async () => {
+        toast.success("Password set successfully");
+        setShowSetPassword(false);
+        setNewPassword("");
+        await refreshUser();
+      })
+      .catch((err: any) => {
+        toast.error("Failed to set password", { description: err });
+      })
+      .finally(() => setSettingPassword(false));
+  };
 
   if (isLoading) {
     return (
@@ -94,11 +152,18 @@ const UserProfile: React.FC = () => {
     { icon: Award,      label: "Status",   sub: user.isVerified ? "Verified" : "Unverified", path: "", color: "text-amber-400", bg: "bg-amber-500/10" },
   ];
 
+  const providerLabel: Record<string, string> = {
+    local: "Email & Password",
+    google: "Google",
+    both: "Email & Google",
+  };
+
   const infoFields = [
     { icon: User,          label: "Username",     value: user.username },
     { icon: Mail,          label: "Email",        value: user.email },
     { icon: Shield,        label: "Role",         value: user.Role,      className: "capitalize" },
     { icon: user.isVerified ? CheckCircle : XCircle, label: "Verification", value: user.isVerified ? "Verified" : "Not Verified", iconClass: user.isVerified ? "text-green-400" : "text-amber-400" },
+    { icon: Link2,         label: "Auth Method",  value: providerLabel[user.authProvider] || user.authProvider, className: "capitalize" },
     { icon: Calendar,      label: "Member Since", value: formatDate(user.createdAt) },
     { icon: Clock,         label: "Last Updated", value: formatDate(user.updatedAt) },
   ];
@@ -254,6 +319,112 @@ const UserProfile: React.FC = () => {
             </div>
           </motion.div>
         )}
+
+        {/* Connected Accounts */}
+        <motion.div
+          className="glass rounded-2xl p-6"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.16 }}
+        >
+          <h2 className="text-lg font-semibold text-foreground mb-5 flex items-center gap-2" style={{ fontFamily: 'Syne, sans-serif' }}>
+            <Link2 className="w-4 h-4 text-orange-400" /> Connected Accounts
+          </h2>
+
+          <div className="space-y-4">
+            {/* Google Account Row */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 rounded-xl bg-foreground/[0.03] border border-border">
+              <div className="flex items-center gap-3">
+                {/* Google Icon */}
+                <div className="w-9 h-9 rounded-lg bg-white/[0.06] border border-white/[0.1] flex items-center justify-center flex-shrink-0">
+                  <svg width="18" height="18" viewBox="0 0 18 18" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M17.64 9.205c0-.639-.057-1.252-.164-1.841H9v3.481h4.844a4.14 4.14 0 0 1-1.796 2.716v2.259h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4" />
+                    <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" fill="#34A853" />
+                    <path d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05" />
+                    <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z" fill="#EA4335" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-foreground">Google</p>
+                  <p className="text-xs text-muted-foreground">
+                    {user.googleId ? "Connected — sign in with your Google account" : "Not connected"}
+                  </p>
+                </div>
+                {user.googleId && (
+                  <span className="ml-1 inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs bg-green-500/10 text-green-400 border border-green-500/20">
+                    <CheckCircle className="w-3 h-3" /> Connected
+                  </span>
+                )}
+              </div>
+
+              {user.googleId ? (
+                <button
+                  onClick={handleUnlinkGoogle}
+                  disabled={googleUnlinking}
+                  className="flex items-center gap-2 px-4 py-2 text-xs font-medium rounded-lg glass border border-rose-500/20 text-rose-400 hover:bg-rose-500/10 transition-colors disabled:opacity-50"
+                >
+                  <Link2Off className="w-3.5 h-3.5" />
+                  {googleUnlinking ? "Unlinking..." : "Disconnect"}
+                </button>
+              ) : (
+                <div className="sm:w-52">
+                  <GoogleAuthButton
+                    variant="link"
+                    loading={googleLinking}
+                    onAccessToken={handleLinkGoogle}
+                    onError={() => toast.error("Google connection was cancelled")}
+                  />
+                </div>
+              )}
+            </div>
+
+            {/* Set Password for Google-only users */}
+            {user.authProvider === "google" && (
+              <div className="p-4 rounded-xl bg-amber-500/[0.05] border border-amber-500/15">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                  <div className="flex items-center gap-3">
+                    <KeyRound className="w-4 h-4 text-amber-400 flex-shrink-0" />
+                    <div>
+                      <p className="text-sm font-medium text-foreground">Password Login</p>
+                      <p className="text-xs text-muted-foreground">Set a password to also sign in with email</p>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => setShowSetPassword(!showSetPassword)}
+                    className="flex items-center gap-2 px-4 py-2 text-xs font-medium rounded-lg glass border border-amber-500/20 text-amber-400 hover:bg-amber-500/10 transition-colors"
+                  >
+                    <KeyRound className="w-3.5 h-3.5" /> Set Password
+                  </button>
+                </div>
+
+                {showSetPassword && (
+                  <div className="mt-4 flex gap-3">
+                    <input
+                      type="password"
+                      placeholder="Enter new password (min 5 chars)"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      className="flex-1 h-10 px-3 rounded-xl bg-foreground/[0.04] border border-border text-foreground text-sm focus:outline-none focus:border-amber-500/40 focus:ring-1 focus:ring-amber-500/20"
+                    />
+                    <button
+                      onClick={handleSetPassword}
+                      disabled={settingPassword}
+                      className="px-4 py-2 text-xs font-semibold rounded-xl bg-amber-500/80 hover:bg-amber-500 text-white transition-colors disabled:opacity-50"
+                    >
+                      {settingPassword ? "Saving..." : "Save"}
+                    </button>
+                    <button
+                      onClick={() => { setShowSetPassword(false); setNewPassword(""); }}
+                      className="px-3 py-2 text-xs rounded-xl glass border border-border text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      <X className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        </motion.div>
 
         {/* Actions */}
         <motion.div

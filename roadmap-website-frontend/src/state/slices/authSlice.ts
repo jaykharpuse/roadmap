@@ -116,6 +116,81 @@ export const resetPassword = createAsyncThunk<
   }
 });
 
+// Google Sign In / Sign Up
+export const googleSignIn = createAsyncThunk<
+  any,
+  { access_token: string },
+  { rejectValue: string }
+>("auth/googleSignIn", async ({ access_token }, { rejectWithValue }) => {
+  try {
+    const { data } = await axiosInstance.post(
+      `/user/auth/google`,
+      { access_token },
+      { withCredentials: true }
+    );
+    if (data.token) {
+      localStorage.setItem("authToken", data.token);
+    }
+    return data;
+  } catch (error: any) {
+    return rejectWithValue(error.response?.data?.error || error.message);
+  }
+});
+
+// Link Google Account
+export const linkGoogleAccount = createAsyncThunk<
+  any,
+  { access_token: string },
+  { rejectValue: string }
+>("auth/linkGoogleAccount", async ({ access_token }, { rejectWithValue }) => {
+  try {
+    const { data } = await axiosInstance.post(
+      `/user/auth/google/link`,
+      { access_token },
+      { withCredentials: true }
+    );
+    return data;
+  } catch (error: any) {
+    return rejectWithValue(error.response?.data?.error || error.message);
+  }
+});
+
+// Unlink Google Account
+export const unlinkGoogleAccount = createAsyncThunk<
+  any,
+  void,
+  { rejectValue: string }
+>("auth/unlinkGoogleAccount", async (_, { rejectWithValue }) => {
+  try {
+    const { data } = await axiosInstance.post(
+      `/user/auth/google/unlink`,
+      {},
+      { withCredentials: true }
+    );
+    return data;
+  } catch (error: any) {
+    return rejectWithValue(error.response?.data?.error || error.message);
+  }
+});
+
+// Set Password for Google-only users
+export const setPasswordForGoogleUser = createAsyncThunk<
+  any,
+  { password: string },
+  { rejectValue: string }
+>("auth/setPasswordForGoogleUser", async ({ password }, { rejectWithValue }) => {
+  try {
+    const { data } = await axiosInstance.post(
+      `/user/auth/google/set-password`,
+      { password },
+      { withCredentials: true }
+    );
+    return data;
+  } catch (error: any) {
+    return rejectWithValue(error.response?.data?.error || error.message);
+  }
+});
+
 const initialState: authState = {
   user: null,
   isAuthenticated: false,
@@ -189,6 +264,54 @@ const authSlice = createSlice({
         state.isLoading = false;
       })
       .addCase(resetPassword.rejected, (state) => {
+        state.isLoading = false;
+      })
+
+      // Google Sign In
+      .addCase(googleSignIn.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(googleSignIn.fulfilled, (state, action) => {
+        state.isLoading = false;
+        state.isAuthenticated = true;
+        state.user = action.payload.user;
+      })
+      .addCase(googleSignIn.rejected, (state) => {
+        state.isLoading = false;
+      })
+
+      // Link Google
+      .addCase(linkGoogleAccount.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(linkGoogleAccount.fulfilled, (state, action) => {
+        state.isLoading = false;
+        if (action.payload.user) state.user = action.payload.user;
+      })
+      .addCase(linkGoogleAccount.rejected, (state) => {
+        state.isLoading = false;
+      })
+
+      // Unlink Google
+      .addCase(unlinkGoogleAccount.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(unlinkGoogleAccount.fulfilled, (state, action) => {
+        state.isLoading = false;
+        if (action.payload.user) state.user = action.payload.user;
+      })
+      .addCase(unlinkGoogleAccount.rejected, (state) => {
+        state.isLoading = false;
+      })
+
+      // Set Password for Google user
+      .addCase(setPasswordForGoogleUser.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(setPasswordForGoogleUser.fulfilled, (state) => {
+        state.isLoading = false;
+      })
+      .addCase(setPasswordForGoogleUser.rejected, (state) => {
         state.isLoading = false;
       });
   },

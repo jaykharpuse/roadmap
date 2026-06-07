@@ -1,3 +1,4 @@
+import React from "react";
 import { Button } from "@/components/ui/button";
 import { SignUpSchema } from "@/schema/authschema/signUpFormSchema";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -6,16 +7,20 @@ import { useForm } from "react-hook-form";
 import { Link, useNavigate } from "react-router-dom";
 import { z } from "zod";
 import { useAppDispatch, useAppSelector } from "@/hooks/useAppDispatch";
-import { registerUser } from "@/state/slices/authSlice";
+import { registerUser, googleSignIn } from "@/state/slices/authSlice";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { motion } from "framer-motion";
+import GoogleAuthButton from "@/components/GoogleAuthButton";
+import { useAuth } from "@/contexts/authContext";
 
 const Signup: React.FC = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const { refreshUser } = useAuth();
   const { isLoading } = useAppSelector((state) => state.auth);
+  const [googleLoading, setGoogleLoading] = React.useState(false);
 
   const form = useForm<z.infer<typeof SignUpSchema>>({
     resolver: zodResolver(SignUpSchema),
@@ -32,6 +37,21 @@ const Signup: React.FC = () => {
       .catch((error) => {
         toast.error(error);
       });
+  };
+
+  const handleGoogleSuccess = async (access_token: string) => {
+    setGoogleLoading(true);
+    dispatch(googleSignIn({ access_token }))
+      .unwrap()
+      .then(async () => {
+        toast.success("Account created with Google");
+        try { await refreshUser(); } catch (e) {}
+        navigate("/", { replace: true });
+      })
+      .catch((error: any) => {
+        toast.error("Google sign-up failed", { description: error });
+      })
+      .finally(() => setGoogleLoading(false));
   };
 
   return (
@@ -153,6 +173,20 @@ const Signup: React.FC = () => {
               </motion.div>
             </form>
           </Form>
+
+          {/* Divider */}
+          <div className="flex items-center gap-3 my-5">
+            <div className="flex-1 h-px bg-white/[0.08]" />
+            <span className="text-xs text-white/25 uppercase tracking-wider">or</span>
+            <div className="flex-1 h-px bg-white/[0.08]" />
+          </div>
+
+          <GoogleAuthButton
+            variant="signup"
+            loading={googleLoading}
+            onAccessToken={handleGoogleSuccess}
+            onError={() => toast.error("Google sign-up was cancelled")}
+          />
 
           <p className="mt-6 text-center text-sm text-white/35">
             Already have an account?{" "}

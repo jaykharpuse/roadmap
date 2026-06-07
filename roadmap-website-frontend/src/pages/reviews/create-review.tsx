@@ -41,7 +41,7 @@ interface FormErrors {
 export default function ReviewModal({
   isOpen,
   onClose,
-  roadmapId,
+  roadmapId: _roadmapId,
 }: ReviewModalProps) {
     const dispatch = useAppDispatch();
     
@@ -59,7 +59,7 @@ export default function ReviewModal({
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const {user} = useAuth();
-  const userId = user?._id ?? "";
+  void user; // userId used indirectly via auth context
 
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};

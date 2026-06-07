@@ -17,8 +17,11 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/authContext";
 import { useAppDispatch, useAppSelector } from "@/hooks/useAppDispatch";
 import { toast } from "sonner";
-import { loginUser } from "@/state/slices/authSlice";
+import { loginUser, googleSignIn } from "@/state/slices/authSlice";
 import { motion } from "framer-motion";
+import GoogleAuthButton from "@/components/GoogleAuthButton";
+
+import React from "react";
 
 const Login: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -32,8 +35,10 @@ const Login: React.FC = () => {
     defaultValues: { email: "", password: "" },
   });
 
+  const [googleLoading, setGoogleLoading] = React.useState(false);
+  const from = (location.state as any)?.from?.pathname || "/";
+
   const onSubmit = (data: z.infer<typeof LoginFormSchema>) => {
-    const from = (location.state as any)?.from?.pathname || "/";
     dispatch(loginUser(data))
       .unwrap()
       .then(async () => {
@@ -44,6 +49,21 @@ const Login: React.FC = () => {
       .catch((error: any) => {
         toast.error("Login failed", { description: error });
       });
+  };
+
+  const handleGoogleSuccess = async (access_token: string) => {
+    setGoogleLoading(true);
+    dispatch(googleSignIn({ access_token }))
+      .unwrap()
+      .then(async () => {
+        toast.success("Signed in with Google");
+        try { await refreshUser(); } catch (e) {}
+        navigate(from, { replace: true });
+      })
+      .catch((error: any) => {
+        toast.error("Google sign-in failed", { description: error });
+      })
+      .finally(() => setGoogleLoading(false));
   };
 
   return (
@@ -152,6 +172,20 @@ const Login: React.FC = () => {
               </motion.div>
             </form>
           </Form>
+
+          {/* Divider */}
+          <div className="flex items-center gap-3 my-5">
+            <div className="flex-1 h-px bg-white/[0.08]" />
+            <span className="text-xs text-white/25 uppercase tracking-wider">or</span>
+            <div className="flex-1 h-px bg-white/[0.08]" />
+          </div>
+
+          <GoogleAuthButton
+            variant="signin"
+            loading={googleLoading}
+            onAccessToken={handleGoogleSuccess}
+            onError={() => toast.error("Google sign-in was cancelled")}
+          />
 
           <p className="mt-6 text-center text-sm text-white/35">
             Don't have an account?{" "}

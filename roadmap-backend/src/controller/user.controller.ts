@@ -186,7 +186,7 @@ export const verifyuser = catchAsync(
       }
 
       const isValidCode = user.verifyCode === code;
-      const isNotCodeExpired = new Date(user.verifyCodeExpiry) > new Date();
+      const isNotCodeExpired = user.verifyCodeExpiry ? new Date(user.verifyCodeExpiry) > new Date() : false;
       if (isValidCode && isNotCodeExpired) {
         user.isVerified = true;
         await user.save();
