@@ -2,7 +2,7 @@
 
 import type React from "react"
 import { useState } from "react"
-import { motion } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { MessageCircle, Users, Send, ChevronRight, Loader2 } from "lucide-react"
@@ -31,10 +31,24 @@ export default function ContactSupport() {
     }
   }
 
+  const [openFaq, setOpenFaq] = useState<number | null>(null)
+
   const faqs = [
-    "How can I create a custom roadmap?",
-    "Is there a fee to download roadmaps?",
-    "How do I access learning resources?",
+    {
+      question: "How can I create a custom roadmap?",
+      answer:
+        "After signing in, click 'Generate Roadmap' from the navbar. Describe your goal in plain language — for example, 'become a frontend developer in 6 months' — and Tutoreez will generate a structured roadmap with nodes, resources, and milestones. You can then edit, reorder, or add your own nodes to tailor it exactly to your situation.",
+    },
+    {
+      question: "Is there a fee to download roadmaps?",
+      answer:
+        "No. All roadmaps on Tutoreez are free to view, use, and share. You can download or export any roadmap at no cost. We may introduce premium features in the future, but core roadmap access will always remain free.",
+    },
+    {
+      question: "How do I access learning resources?",
+      answer:
+        "Each node in a roadmap links to curated learning resources — articles, videos, and courses. Click any node to expand it and see its resources. You can also browse the Resources page from the navbar to search across all available materials by topic or type.",
+    },
   ]
 
   return (
@@ -62,7 +76,7 @@ export default function ContactSupport() {
             Get in Touch
           </p>
           <h2
-            className="text-4xl md:text-5xl font-bold text-white"
+            className="text-4xl md:text-5xl font-bold text-foreground"
             style={{ fontFamily: 'Syne, sans-serif' }}
           >
             Contact &{" "}
@@ -81,14 +95,14 @@ export default function ContactSupport() {
           >
             <div className="glass rounded-2xl p-8 h-full">
               <h3
-                className="text-xl font-semibold text-white mb-6"
+                className="text-xl font-semibold text-foreground mb-6"
                 style={{ fontFamily: 'Syne, sans-serif' }}
               >
                 Send a message
               </h3>
               <form onSubmit={handleSubmit} className="space-y-5">
                 <div>
-                  <label className="block text-xs font-medium text-white/50 uppercase tracking-wider mb-2">
+                  <label className="block text-xs font-medium text-foreground/50 uppercase tracking-wider mb-2">
                     Name
                   </label>
                   <Input
@@ -97,13 +111,13 @@ export default function ContactSupport() {
                     value={formData.name}
                     onChange={handleInputChange}
                     placeholder="Your name"
-                    className="h-11 bg-white/[0.04] border-white/[0.08] text-white placeholder:text-white/25 focus:border-orange-500/40 focus:ring-orange-500/20 rounded-lg"
+                    className="h-11 bg-muted/50 dark:bg-white/[0.04] border-border dark:border-white/[0.08] text-foreground placeholder:text-muted-foreground focus:border-orange-500/40 focus:ring-orange-500/20 rounded-lg"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-white/50 uppercase tracking-wider mb-2">
+                  <label className="block text-xs font-medium text-foreground/50 uppercase tracking-wider mb-2">
                     Email
                   </label>
                   <Input
@@ -112,13 +126,13 @@ export default function ContactSupport() {
                     value={formData.email}
                     onChange={handleInputChange}
                     placeholder="you@example.com"
-                    className="h-11 bg-white/[0.04] border-white/[0.08] text-white placeholder:text-white/25 focus:border-orange-500/40 focus:ring-orange-500/20 rounded-lg"
+                    className="h-11 bg-muted/50 dark:bg-white/[0.04] border-border dark:border-white/[0.08] text-foreground placeholder:text-muted-foreground focus:border-orange-500/40 focus:ring-orange-500/20 rounded-lg"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-white/50 uppercase tracking-wider mb-2">
+                  <label className="block text-xs font-medium text-foreground/50 uppercase tracking-wider mb-2">
                     Message
                   </label>
                   <Textarea
@@ -127,7 +141,7 @@ export default function ContactSupport() {
                     onChange={handleInputChange}
                     rows={5}
                     placeholder="How can we help you?"
-                    className="bg-white/[0.04] border-white/[0.08] text-white placeholder:text-white/25 focus:border-orange-500/40 focus:ring-orange-500/20 rounded-lg resize-none"
+                    className="bg-muted/50 dark:bg-white/[0.04] border-border dark:border-white/[0.08] text-foreground placeholder:text-muted-foreground focus:border-orange-500/40 focus:ring-orange-500/20 rounded-lg resize-none"
                     required
                   />
                 </div>
@@ -161,25 +175,45 @@ export default function ContactSupport() {
             {/* FAQs */}
             <div className="glass rounded-2xl p-8">
               <h3
-                className="text-xl font-semibold text-white mb-5"
+                className="text-xl font-semibold text-foreground mb-5"
                 style={{ fontFamily: 'Syne, sans-serif' }}
               >
                 FAQs
               </h3>
-              <ul className="space-y-3">
-                {faqs.map((faq, index) => (
-                  <motion.li
-                    key={index}
-                    whileHover={{ x: 4 }}
-                    transition={{ duration: 0.2 }}
-                    className="group flex items-center gap-3 p-3 rounded-xl hover:bg-white/[0.04] cursor-pointer transition-colors duration-200"
-                  >
-                    <ChevronRight className="w-4 h-4 text-orange-400/50 group-hover:text-orange-400 transition-colors flex-shrink-0" />
-                    <span className="text-sm text-white/55 group-hover:text-white/80 transition-colors duration-200">
-                      {faq}
-                    </span>
-                  </motion.li>
-                ))}
+              <ul className="space-y-2">
+                {faqs.map((faq, index) => {
+                  const isOpen = openFaq === index
+                  return (
+                    <li key={index}>
+                      <button
+                        onClick={() => setOpenFaq(isOpen ? null : index)}
+                        className="group w-full flex items-center gap-3 p-3 rounded-xl hover:bg-white/[0.04] cursor-pointer transition-colors duration-200 text-left"
+                      >
+                        <ChevronRight
+                          className={`w-4 h-4 flex-shrink-0 transition-all duration-200 ${isOpen ? "rotate-90 text-orange-400" : "text-orange-400/50 group-hover:text-orange-400"}`}
+                        />
+                        <span className={`text-sm transition-colors duration-200 ${isOpen ? "text-foreground" : "text-muted-foreground group-hover:text-foreground/80"}`}>
+                          {faq.question}
+                        </span>
+                      </button>
+                      <AnimatePresence initial={false}>
+                        {isOpen && (
+                          <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: "auto", opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.25, ease: [0.16, 1, 0.3, 1] }}
+                            className="overflow-hidden"
+                          >
+                            <p className="text-sm text-muted-foreground leading-relaxed pl-7 pr-3 pb-3">
+                              {faq.answer}
+                            </p>
+                          </motion.div>
+                        )}
+                      </AnimatePresence>
+                    </li>
+                  )
+                })}
               </ul>
             </div>
 
@@ -192,12 +226,12 @@ export default function ContactSupport() {
 
                 <div>
                   <h3
-                    className="text-xl font-semibold text-white mb-1.5"
+                    className="text-xl font-semibold text-foreground mb-1.5"
                     style={{ fontFamily: 'Syne, sans-serif' }}
                   >
                     Join our community
                   </h3>
-                  <p className="text-sm text-white/45">Connect with learners on Discord or Slack</p>
+                  <p className="text-sm text-muted-foreground">Connect with learners on Discord or Slack</p>
                 </div>
 
                 <motion.button

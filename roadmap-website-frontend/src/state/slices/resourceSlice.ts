@@ -25,18 +25,18 @@ interface ResourceState {
       resource: Resource | null;
       resourceReviews: ResourceReview[];
       userResourceReviews: ResourceReview[];
-      loading : boolean; 
-      error: string | null; 
+      loading : boolean;
+      error: string | null;
 }
 
 
 const initialState: ResourceState = {
-      resources: [], 
+      resources: [],
       resource: null,
       resourceReviews: [],
       userResourceReviews: [],
-      loading: false, 
-      error: null, 
+      loading: false,
+      error: null,
 };
 
 

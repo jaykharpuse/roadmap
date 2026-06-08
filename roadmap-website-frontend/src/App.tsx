@@ -17,6 +17,7 @@ import RoadmapDetailsPage from "./pages/roadmap/getroadmapdetails-page"
 import Dashboard from "./pages/Analytics/main"
 import ResourceDetails from "@/pages/resource-details";
 import UserProfile from "./pages/profile/user-profile";
+import ArticlePage from "./pages/main-pages/article-page";
 
 
 function App() {
@@ -47,6 +48,7 @@ function App() {
           </ProtectedRoute>
         } />
         <Route path="/resources/:id" element={<ResourceDetails />} />
+        <Route path="/articles/:slug" element={<ArticlePage />} />
         <Route path="/profile" element={
           <ProtectedRoute>
             <UserProfile />

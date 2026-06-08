@@ -52,7 +52,7 @@ const Navbar: React.FC = () => {
               <Route className="w-4 h-4 text-white" />
             </div>
             <span className="text-lg font-bold tracking-tight text-foreground" style={{ fontFamily: 'Syne, sans-serif' }}>
-              Road<span className="text-gradient-brand">Mapper</span>
+              Tutor<span className="text-gradient-brand">eez</span>
             </span>
           </Link>
 

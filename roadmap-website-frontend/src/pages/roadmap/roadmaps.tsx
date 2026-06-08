@@ -32,18 +32,18 @@ const difficultyConfig: Record<string, { label: string; cls: string }> = {
 const SkeletonCard = () => (
   <div className="glass rounded-2xl p-6 animate-pulse">
     <div className="flex gap-3 mb-4">
-      <div className="w-10 h-10 rounded-xl bg-white/[0.08]" />
+      <div className="w-10 h-10 rounded-xl bg-foreground/[0.08]" />
       <div className="flex-1 space-y-2">
-        <div className="h-4 bg-white/[0.08] rounded w-3/4" />
-        <div className="h-3 bg-white/[0.06] rounded w-1/2" />
+        <div className="h-4 bg-foreground/[0.08] rounded w-3/4" />
+        <div className="h-3 bg-foreground/[0.06] rounded w-1/2" />
       </div>
     </div>
     <div className="space-y-2 mb-4">
-      <div className="h-3 bg-white/[0.06] rounded" />
-      <div className="h-3 bg-white/[0.06] rounded w-4/5" />
+      <div className="h-3 bg-foreground/[0.06] rounded" />
+      <div className="h-3 bg-foreground/[0.06] rounded w-4/5" />
     </div>
     <div className="flex gap-2">
-      {[1,2,3].map(i => <div key={i} className="h-5 w-14 bg-white/[0.06] rounded-full" />)}
+      {[1,2,3].map(i => <div key={i} className="h-5 w-14 bg-foreground/[0.06] rounded-full" />)}
     </div>
   </div>
 )
@@ -69,7 +69,7 @@ const Roadmaps: React.FunctionComponent = () => {
   }, [location.search])
 
   useEffect(() => {
-    document.title = "Roadmaps — RoadMapper"
+    document.title = "Roadmaps — Tutoreez"
     dispatch(getRoadmaps(page))
       .unwrap()
       .then((data) => {

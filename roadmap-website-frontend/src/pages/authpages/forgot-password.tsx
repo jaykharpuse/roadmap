@@ -53,8 +53,8 @@ const ForgotPassword: React.FC = () => {
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-orange-400 via-rose-500 to-violet-500 flex items-center justify-center shadow-lg shadow-orange-500/25">
               <Route className="w-5 h-5 text-white" />
             </div>
-            <span className="text-xl font-bold text-white" style={{ fontFamily: 'Syne, sans-serif' }}>
-              Road<span className="text-gradient-brand">Mapper</span>
+            <span className="text-xl font-bold text-foreground" style={{ fontFamily: 'Syne, sans-serif' }}>
+              Tutor<span className="text-gradient-brand">eez</span>
             </span>
           </Link>
         </div>
@@ -62,13 +62,13 @@ const ForgotPassword: React.FC = () => {
         <div className="glass-strong rounded-2xl p-8">
           {isBackToLogin ? (
             <div className="text-center py-4">
-              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-500/20 to-violet-500/20 border border-white/[0.08] flex items-center justify-center mx-auto mb-5">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-500/20 to-violet-500/20 border border-border flex items-center justify-center mx-auto mb-5">
                 <MailCheck className="w-7 h-7 text-orange-400" />
               </div>
-              <h2 className="text-2xl font-bold text-white mb-2" style={{ fontFamily: 'Syne, sans-serif' }}>
+              <h2 className="text-2xl font-bold text-foreground mb-2" style={{ fontFamily: 'Syne, sans-serif' }}>
                 Check your inbox
               </h2>
-              <p className="text-sm text-white/40 mb-6">
+              <p className="text-sm text-muted-foreground mb-6">
                 We sent a password reset link to your email address.
               </p>
               <Button
@@ -82,10 +82,10 @@ const ForgotPassword: React.FC = () => {
           ) : (
             <>
               <div className="mb-8 text-center">
-                <h1 className="text-2xl font-bold text-white mb-1.5" style={{ fontFamily: 'Syne, sans-serif' }}>
+                <h1 className="text-2xl font-bold text-foreground mb-1.5" style={{ fontFamily: 'Syne, sans-serif' }}>
                   Reset password
                 </h1>
-                <p className="text-sm text-white/40">We'll send a reset link to your email</p>
+                <p className="text-sm text-muted-foreground">We'll send a reset link to your email</p>
               </div>
 
               <Form {...form}>
@@ -95,14 +95,14 @@ const ForgotPassword: React.FC = () => {
                     name="email"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-xs font-medium text-white/50 uppercase tracking-wider">
+                        <FormLabel className="text-xs font-medium text-foreground/50 uppercase tracking-wider">
                           Email
                         </FormLabel>
                         <FormControl>
                           <Input
                             placeholder="you@example.com"
                             type="email"
-                            className="h-11 bg-white/[0.04] border-white/[0.08] text-white placeholder:text-white/25 focus:border-orange-500/40 focus:ring-orange-500/20 rounded-xl"
+                            className="h-11 bg-muted/50 dark:bg-white/[0.04] border-border dark:border-white/[0.08] text-foreground placeholder:text-muted-foreground focus:border-orange-500/40 focus:ring-orange-500/20 rounded-xl"
                             {...field}
                           />
                         </FormControl>
@@ -128,7 +128,7 @@ const ForgotPassword: React.FC = () => {
                 </form>
               </Form>
 
-              <p className="mt-6 text-center text-sm text-white/35">
+              <p className="mt-6 text-center text-sm text-muted-foreground">
                 Remember your password?{" "}
                 <Link to="/login" className="text-orange-400/80 hover:text-orange-400 font-medium transition-colors">
                   Sign in

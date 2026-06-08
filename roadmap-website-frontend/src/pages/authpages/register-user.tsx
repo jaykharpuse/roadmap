@@ -75,8 +75,8 @@ const Signup: React.FC = () => {
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-orange-400 via-rose-500 to-violet-500 flex items-center justify-center shadow-lg shadow-orange-500/25">
               <Route className="w-5 h-5 text-white" />
             </div>
-            <span className="text-xl font-bold text-white" style={{ fontFamily: 'Syne, sans-serif' }}>
-              Road<span className="text-gradient-brand">Mapper</span>
+            <span className="text-xl font-bold text-foreground" style={{ fontFamily: 'Syne, sans-serif' }}>
+              Tutor<span className="text-gradient-brand">eez</span>
             </span>
           </Link>
         </div>
@@ -84,10 +84,10 @@ const Signup: React.FC = () => {
         {/* Card */}
         <div className="glass-strong rounded-2xl p-8">
           <div className="mb-8 text-center">
-            <h1 className="text-2xl font-bold text-white mb-1.5" style={{ fontFamily: 'Syne, sans-serif' }}>
+            <h1 className="text-2xl font-bold text-foreground mb-1.5" style={{ fontFamily: 'Syne, sans-serif' }}>
               Create your account
             </h1>
-            <p className="text-sm text-white/40">Start your learning journey today — it's free</p>
+            <p className="text-sm text-muted-foreground">Start your learning journey today — it's free</p>
           </div>
 
           <Form {...form}>
@@ -97,14 +97,14 @@ const Signup: React.FC = () => {
                 name="username"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-xs font-medium text-white/50 uppercase tracking-wider">
+                    <FormLabel className="text-xs font-medium text-foreground/50 uppercase tracking-wider">
                       Username
                     </FormLabel>
                     <FormControl>
                       <Input
                         placeholder="johndoe"
                         type="text"
-                        className="h-11 bg-white/[0.04] border-white/[0.08] text-white placeholder:text-white/25 focus:border-orange-500/40 focus:ring-orange-500/20 rounded-xl"
+                        className="h-11 bg-muted/50 dark:bg-white/[0.04] border-border dark:border-white/[0.08] text-foreground placeholder:text-muted-foreground focus:border-orange-500/40 focus:ring-orange-500/20 rounded-xl"
                         {...field}
                       />
                     </FormControl>
@@ -118,14 +118,14 @@ const Signup: React.FC = () => {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-xs font-medium text-white/50 uppercase tracking-wider">
+                    <FormLabel className="text-xs font-medium text-foreground/50 uppercase tracking-wider">
                       Email
                     </FormLabel>
                     <FormControl>
                       <Input
                         placeholder="you@example.com"
                         type="email"
-                        className="h-11 bg-white/[0.04] border-white/[0.08] text-white placeholder:text-white/25 focus:border-orange-500/40 focus:ring-orange-500/20 rounded-xl"
+                        className="h-11 bg-muted/50 dark:bg-white/[0.04] border-border dark:border-white/[0.08] text-foreground placeholder:text-muted-foreground focus:border-orange-500/40 focus:ring-orange-500/20 rounded-xl"
                         {...field}
                       />
                     </FormControl>
@@ -139,14 +139,14 @@ const Signup: React.FC = () => {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-xs font-medium text-white/50 uppercase tracking-wider">
+                    <FormLabel className="text-xs font-medium text-foreground/50 uppercase tracking-wider">
                       Password
                     </FormLabel>
                     <FormControl>
                       <Input
                         placeholder="Create a strong password"
                         type="password"
-                        className="h-11 bg-white/[0.04] border-white/[0.08] text-white placeholder:text-white/25 focus:border-orange-500/40 focus:ring-orange-500/20 rounded-xl"
+                        className="h-11 bg-muted/50 dark:bg-white/[0.04] border-border dark:border-white/[0.08] text-foreground placeholder:text-muted-foreground focus:border-orange-500/40 focus:ring-orange-500/20 rounded-xl"
                         {...field}
                       />
                     </FormControl>
@@ -176,9 +176,9 @@ const Signup: React.FC = () => {
 
           {/* Divider */}
           <div className="flex items-center gap-3 my-5">
-            <div className="flex-1 h-px bg-white/[0.08]" />
-            <span className="text-xs text-white/25 uppercase tracking-wider">or</span>
-            <div className="flex-1 h-px bg-white/[0.08]" />
+            <div className="flex-1 h-px bg-border" />
+            <span className="text-xs text-foreground/30 uppercase tracking-wider">or</span>
+            <div className="flex-1 h-px bg-border" />
           </div>
 
           <GoogleAuthButton
@@ -188,7 +188,7 @@ const Signup: React.FC = () => {
             onError={() => toast.error("Google sign-up was cancelled")}
           />
 
-          <p className="mt-6 text-center text-sm text-white/35">
+          <p className="mt-6 text-center text-sm text-muted-foreground">
             Already have an account?{" "}
             <Link to="/login" className="text-orange-400/80 hover:text-orange-400 font-medium transition-colors">
               Sign in

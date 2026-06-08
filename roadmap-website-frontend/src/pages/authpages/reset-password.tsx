@@ -56,21 +56,21 @@ const ResetPassword: React.FC = () => {
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-orange-400 via-rose-500 to-violet-500 flex items-center justify-center shadow-lg shadow-orange-500/25">
               <Route className="w-5 h-5 text-white" />
             </div>
-            <span className="text-xl font-bold text-white" style={{ fontFamily: 'Syne, sans-serif' }}>
-              Road<span className="text-gradient-brand">Mapper</span>
+            <span className="text-xl font-bold text-foreground" style={{ fontFamily: 'Syne, sans-serif' }}>
+              Tutor<span className="text-gradient-brand">eez</span>
             </span>
           </Link>
         </div>
 
         <div className="glass-strong rounded-2xl p-8">
           <div className="mb-8 text-center">
-            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-500/20 to-violet-500/20 border border-white/[0.08] flex items-center justify-center mx-auto mb-5">
+            <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-orange-500/20 to-violet-500/20 border border-border flex items-center justify-center mx-auto mb-5">
               <KeyRound className="w-7 h-7 text-orange-400" />
             </div>
-            <h1 className="text-2xl font-bold text-white mb-1.5" style={{ fontFamily: 'Syne, sans-serif' }}>
+            <h1 className="text-2xl font-bold text-foreground mb-1.5" style={{ fontFamily: 'Syne, sans-serif' }}>
               Set new password
             </h1>
-            <p className="text-sm text-white/40">Choose a strong password for your account</p>
+            <p className="text-sm text-muted-foreground">Choose a strong password for your account</p>
           </div>
 
           <Form {...form}>
@@ -80,14 +80,14 @@ const ResetPassword: React.FC = () => {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-xs font-medium text-white/50 uppercase tracking-wider">
+                    <FormLabel className="text-xs font-medium text-foreground/50 uppercase tracking-wider">
                       New Password
                     </FormLabel>
                     <FormControl>
                       <Input
                         placeholder="Enter new password"
                         type="password"
-                        className="h-11 bg-white/[0.04] border-white/[0.08] text-white placeholder:text-white/25 focus:border-orange-500/40 focus:ring-orange-500/20 rounded-xl"
+                        className="h-11 bg-muted/50 dark:bg-white/[0.04] border-border dark:border-white/[0.08] text-foreground placeholder:text-muted-foreground focus:border-orange-500/40 focus:ring-orange-500/20 rounded-xl"
                         {...field}
                       />
                     </FormControl>
@@ -101,14 +101,14 @@ const ResetPassword: React.FC = () => {
                 name="confirmPassword"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel className="text-xs font-medium text-white/50 uppercase tracking-wider">
+                    <FormLabel className="text-xs font-medium text-foreground/50 uppercase tracking-wider">
                       Confirm Password
                     </FormLabel>
                     <FormControl>
                       <Input
                         placeholder="Confirm new password"
                         type="password"
-                        className="h-11 bg-white/[0.04] border-white/[0.08] text-white placeholder:text-white/25 focus:border-orange-500/40 focus:ring-orange-500/20 rounded-xl"
+                        className="h-11 bg-muted/50 dark:bg-white/[0.04] border-border dark:border-white/[0.08] text-foreground placeholder:text-muted-foreground focus:border-orange-500/40 focus:ring-orange-500/20 rounded-xl"
                         {...field}
                       />
                     </FormControl>

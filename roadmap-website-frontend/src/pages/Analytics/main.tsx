@@ -14,7 +14,7 @@ export default function Dashboard() {
   const navigate = useNavigate()
 
   useEffect(() => {
-    document.title = "Progress Dashboard — RoadMapper"
+    document.title = "Progress Dashboard — Tutoreez"
     dispatch(getUserRoadmapProgressForDashBoard()).unwrap().catch(() => {})
   }, [])
 

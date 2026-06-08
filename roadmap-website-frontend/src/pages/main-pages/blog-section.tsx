@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion"
 import { TrendingUp, Users, CheckCircle, FileText, Code, ArrowUpRight } from "lucide-react"
+import { useNavigate } from "react-router-dom"
 
 const cardVariants = {
   hidden: { opacity: 0, y: 36 },
@@ -9,11 +10,11 @@ const cardVariants = {
 }
 
 const blogPosts = [
-  { title: "How to Plan Your Learning Journey", icon: TrendingUp, tag: "Strategy", color: "orange" },
-  { title: "Top Tools for Building Roadmaps", icon: Code, tag: "Tools", color: "violet" },
-  { title: "Roadmap Case Studies", icon: CheckCircle, tag: "Case Study", color: "rose" },
-  { title: "Industry-Specific Roadmap Guides", icon: FileText, tag: "Guide", color: "blue" },
-  { title: "Building a Learning Community", icon: Users, tag: "Community", color: "amber" },
+  { slug: "how-to-plan-your-learning-journey",   title: "How to Plan Your Learning Journey", icon: TrendingUp, tag: "Strategy",   color: "orange" },
+  { slug: "top-tools-for-building-roadmaps",      title: "Top Tools for Building Roadmaps",   icon: Code,       tag: "Tools",       color: "violet" },
+  { slug: "roadmap-case-studies",                 title: "Roadmap Case Studies",               icon: CheckCircle,tag: "Case Study",  color: "rose"   },
+  { slug: "industry-specific-roadmap-guides",     title: "Industry-Specific Roadmap Guides",   icon: FileText,   tag: "Guide",       color: "blue"   },
+  { slug: "building-a-learning-community",        title: "Building a Learning Community",      icon: Users,      tag: "Community",   color: "amber"  },
 ]
 
 const colorMap: Record<string, { bg: string; text: string; glow: string; border: string }> = {
@@ -25,6 +26,7 @@ const colorMap: Record<string, { bg: string; text: string; glow: string; border:
 }
 
 export default function BlogSection() {
+  const navigate = useNavigate()
   return (
     <section className="relative bg-background py-28 px-5 md:px-8 overflow-hidden">
 
@@ -79,6 +81,7 @@ export default function BlogSection() {
                 variants={cardVariants}
                 whileHover={{ y: -5, scale: 1.01 }}
                 whileTap={{ scale: 0.98 }}
+                onClick={() => navigate(`/articles/${post.slug}`)}
                 className="group glass card-gradient-border rounded-2xl overflow-hidden cursor-pointer"
               >
                 {/* Thumbnail */}

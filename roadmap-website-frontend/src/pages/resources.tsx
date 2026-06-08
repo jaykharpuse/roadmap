@@ -3,7 +3,7 @@ import { useAppDispatch, useAppSelector } from "@/hooks/useAppDispatch";
 import { fetchResources } from "@/state/slices/resourceSlice";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { Search, Clock, Star, Eye, BookOpen, User, Layers } from "lucide-react";
+import { Search, Clock, Star, Eye, BookOpen, User, Layers, CheckCircle2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import type { Resource } from "@/types/user/Resource/Resource";
@@ -45,7 +45,7 @@ const Resources: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
-    document.title = "Resources — RoadMapper";
+    document.title = "Resources — Tutoreez";
     dispatch(fetchResources());
   }, [dispatch]);
 
@@ -162,7 +162,7 @@ const Resources: React.FC = () => {
                   {/* Approved badge */}
                   {resource.isApproved && (
                     <Badge className="mb-2 w-fit bg-green-500/15 text-green-400 border-green-500/25 text-xs">
-                      Approved
+                      <CheckCircle2 className="w-3 h-3 mr-1" />Approved
                     </Badge>
                   )}
 

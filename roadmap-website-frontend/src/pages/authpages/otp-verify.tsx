@@ -58,8 +58,8 @@ const Verify: React.FC = () => {
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-orange-400 via-rose-500 to-violet-500 flex items-center justify-center shadow-lg shadow-orange-500/25">
               <Route className="w-5 h-5 text-white" />
             </div>
-            <span className="text-xl font-bold text-white" style={{ fontFamily: 'Syne, sans-serif' }}>
-              Road<span className="text-gradient-brand">Mapper</span>
+            <span className="text-xl font-bold text-foreground" style={{ fontFamily: 'Syne, sans-serif' }}>
+              Tutor<span className="text-gradient-brand">eez</span>
             </span>
           </Link>
         </div>
@@ -69,12 +69,12 @@ const Verify: React.FC = () => {
             <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-violet-500/20 to-violet-600/10 border border-violet-500/20 flex items-center justify-center mx-auto mb-5">
               <ShieldCheck className="w-7 h-7 text-violet-400" />
             </div>
-            <h1 className="text-2xl font-bold text-white mb-1.5" style={{ fontFamily: 'Syne, sans-serif' }}>
+            <h1 className="text-2xl font-bold text-foreground mb-1.5" style={{ fontFamily: 'Syne, sans-serif' }}>
               Verify your account
             </h1>
-            <p className="text-sm text-white/40">
+            <p className="text-sm text-muted-foreground">
               Enter the 6-digit code sent to{" "}
-              <span className="text-white/60 font-medium">{email}</span>
+              <span className="text-foreground/70 font-medium">{email}</span>
             </p>
           </div>
 
@@ -85,7 +85,7 @@ const Verify: React.FC = () => {
                 name="code"
                 render={({ field }) => (
                   <FormItem className="text-center">
-                    <FormLabel className="text-xs font-medium text-white/50 uppercase tracking-wider">
+                    <FormLabel className="text-xs font-medium text-foreground/50 uppercase tracking-wider">
                       One-Time Password
                     </FormLabel>
                     <FormControl>
@@ -96,14 +96,14 @@ const Verify: React.FC = () => {
                               <InputOTPSlot
                                 key={index}
                                 index={index}
-                                className="w-11 h-11 rounded-xl border-white/[0.1] bg-white/[0.04] text-white text-base font-bold focus:border-orange-500/50 focus:ring-orange-500/20"
+                                className="w-11 h-11 rounded-xl border-border dark:border-white/[0.1] bg-muted/50 dark:bg-white/[0.04] text-foreground text-base font-bold focus:border-orange-500/50 focus:ring-orange-500/20"
                               />
                             ))}
                           </InputOTPGroup>
                         </InputOTP>
                       </div>
                     </FormControl>
-                    <FormDescription className="text-xs text-white/30 mt-2">
+                    <FormDescription className="text-xs text-muted-foreground mt-2">
                       Check your email inbox for the verification code.
                     </FormDescription>
                     <FormMessage className="text-rose-400 text-xs" />

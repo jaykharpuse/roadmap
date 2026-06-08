@@ -39,13 +39,13 @@ export default function FooterSection() {
                 <Route className="w-4 h-4 text-white" />
               </div>
               <span
-                className="text-lg font-bold text-white tracking-tight"
+                className="text-lg font-bold text-foreground tracking-tight"
                 style={{ fontFamily: 'Syne, sans-serif' }}
               >
-                Road<span className="text-gradient-brand">Mapper</span>
+                Tutor<span className="text-gradient-brand">eez</span>
               </span>
             </Link>
-            <p className="text-sm text-white/35 max-w-xs leading-relaxed">
+            <p className="text-sm text-muted-foreground max-w-xs leading-relaxed">
               Structured learning paths for every topic. Free, forever.
             </p>
           </motion.div>
@@ -60,7 +60,7 @@ export default function FooterSection() {
           >
             {/* Quick Links */}
             <div>
-              <p className="text-xs font-semibold tracking-widest uppercase text-white/30 mb-4">
+              <p className="text-xs font-semibold tracking-widest uppercase text-foreground/40 mb-4">
                 Quick Links
               </p>
               <nav className="flex flex-col gap-2.5">
@@ -68,7 +68,7 @@ export default function FooterSection() {
                   <motion.div key={i} whileHover={{ x: 3 }} transition={{ duration: 0.15 }}>
                     <Link
                       to={link.href}
-                      className="text-sm text-white/45 hover:text-orange-400 transition-colors duration-200"
+                      className="text-sm text-muted-foreground hover:text-orange-400 transition-colors duration-200"
                     >
                       {link.name}
                     </Link>
@@ -79,7 +79,7 @@ export default function FooterSection() {
 
             {/* Social */}
             <div>
-              <p className="text-xs font-semibold tracking-widest uppercase text-white/30 mb-4">
+              <p className="text-xs font-semibold tracking-widest uppercase text-foreground/40 mb-4">
                 Social
               </p>
               <div className="flex items-center gap-3">
@@ -90,7 +90,7 @@ export default function FooterSection() {
                     whileHover={{ scale: 1.15, y: -2 }}
                     whileTap={{ scale: 0.92 }}
                     transition={{ duration: 0.15 }}
-                    className="w-9 h-9 rounded-xl glass flex items-center justify-center text-white/40 hover:text-orange-400 hover:border-orange-500/25 transition-colors duration-200"
+                    className="w-9 h-9 rounded-xl glass flex items-center justify-center text-foreground/40 hover:text-orange-400 hover:border-orange-500/25 transition-colors duration-200"
                     aria-label={social.name}
                   >
                     <social.icon className="w-4 h-4" />
@@ -103,16 +103,16 @@ export default function FooterSection() {
 
         {/* Bottom bar */}
         <motion.div
-          className="mt-12 pt-6 border-t border-white/[0.06] flex flex-col sm:flex-row items-center justify-between gap-3"
+          className="mt-12 pt-6 border-t border-border flex flex-col sm:flex-row items-center justify-between gap-3"
           initial={{ opacity: 0 }}
           whileInView={{ opacity: 1 }}
           viewport={{ once: true }}
           transition={{ duration: 0.5, delay: 0.2 }}
         >
-          <p className="text-xs text-white/25">
-            © {new Date().getFullYear()} RoadMapper. All rights reserved.
+          <p className="text-xs text-foreground/30">
+            © {new Date().getFullYear()} Tutoreez. All rights reserved.
           </p>
-          <p className="text-xs text-white/20">
+          <p className="text-xs text-foreground/25">
             Made with ♥ for learners everywhere
           </p>
         </motion.div>
