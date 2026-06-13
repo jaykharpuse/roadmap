@@ -456,11 +456,27 @@ export async function generateRoadmap(options: GenerateRoadmapOptions) {
       // Normalize and validate
       aiResponse.category = validateCategory(aiResponse.category || "other");
       aiResponse.difficulty = aiResponse.difficulty || "beginner";
+
+      // Normalize duration unit
+      let durationUnit: "hours" | "days" | "weeks" | "months" = "weeks";
+      const unitMap: { [key: string]: "hours" | "days" | "weeks" | "months" } = {
+        "hour": "hours",
+        "hours": "hours",
+        "day": "days",
+        "days": "days",
+        "week": "weeks",
+        "weeks": "weeks",
+        "month": "months",
+        "months": "months"
+      };
+      const inputUnit = aiResponse.estimatedDuration?.unit || "weeks";
+      durationUnit = unitMap[inputUnit.toLowerCase()] || "weeks";
+
       aiResponse.estimatedDuration = {
         value: aiResponse.estimatedDuration?.value || 8,
-        unit: aiResponse.estimatedDuration?.unit || "weeks",
+        unit: durationUnit,
       };
-      
+
       if (!validDifficulties.includes(aiResponse.difficulty)) {
         aiResponse.difficulty = "beginner";
       }
@@ -713,6 +729,22 @@ function validateNodes(nodes: RoadmapNodeInput[]): RoadmapNodeInput[] {
     if (!node.resources || node.resources.length < 2) {
       const fallback = fallbackResourcesForNode(node.title);
       node.resources = [...(node.resources || []), ...fallback].slice(0, 4);
+    }
+
+    // Normalize duration unit (convert singular to plural)
+    if (node.estimatedDuration?.unit) {
+      const unitMap: { [key: string]: "hours" | "days" | "weeks" | "months" } = {
+        "hour": "hours",
+        "hours": "hours",
+        "day": "days",
+        "days": "days",
+        "week": "weeks",
+        "weeks": "weeks",
+        "month": "months",
+        "months": "months"
+      };
+      const normalizedUnit = unitMap[node.estimatedDuration.unit.toLowerCase()] || "weeks";
+      node.estimatedDuration.unit = normalizedUnit;
     }
 
     if (!node.estimatedDuration || node.estimatedDuration.value === undefined || node.estimatedDuration.value === null) {
