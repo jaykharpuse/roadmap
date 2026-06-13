@@ -22,7 +22,7 @@ const features = [
     icon: FileText,
     gradient: "from-rose-500/20 via-pink-500/10 to-transparent",
     iconColor: "text-rose-400",
-    action: "/roadmaps",
+    action: "/resources",
   },
   {
     title: "Create Custom Roadmaps",
@@ -38,7 +38,7 @@ const features = [
     icon: BookOpen,
     gradient: "from-blue-500/20 via-cyan-500/10 to-transparent",
     iconColor: "text-blue-400",
-    action: "/roadmaps",
+    action: "/resources",
   },
   {
     title: "Trending Technologies",

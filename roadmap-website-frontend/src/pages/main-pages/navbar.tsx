@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ProfileDropdown from '@/components/ProfileDropdown';
 import { useAuth } from '@/contexts/authContext';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Menu, X, BookOpen, TrendingUp, Map, Sun, Moon } from 'lucide-react';
 import appLogo from '@/assets/app_logo.svg';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -20,6 +20,7 @@ const Navbar: React.FC = () => {
   const [mounted, setMounted] = useState(false);
   const { isAuthenticated } = useAuth();
   const { theme, setTheme } = useTheme();
+  const location = useLocation();
 
   const navItems: NavItem[] = [
     { id: 1, name: 'Roadmaps',  icon: <Map className="w-4 h-4" />,      path: '/roadmaps' },
@@ -59,16 +60,23 @@ const Navbar: React.FC = () => {
 
           {/* Desktop Nav */}
           <div className="hidden md:flex items-center gap-1">
-            {navItems.map((item) => (
-              <Link
-                key={item.id}
-                to={item.path}
-                className="flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-foreground/60 hover:text-foreground rounded-lg hover:bg-foreground/[0.06] transition-all duration-200"
-              >
-                {item.icon}
-                {item.name}
-              </Link>
-            ))}
+            {navItems.map((item) => {
+              const isActive = location.pathname === item.path;
+              return (
+                <Link
+                  key={item.id}
+                  to={item.path}
+                  className={`flex items-center gap-1.5 px-4 py-2 text-sm font-medium rounded-lg transition-all duration-200 ${
+                    isActive
+                      ? 'text-orange-400 bg-gradient-to-r from-orange-500/15 via-rose-500/10 to-transparent border border-orange-500/20'
+                      : 'text-foreground/60 hover:text-foreground hover:bg-foreground/[0.06]'
+                  }`}
+                >
+                  {item.icon}
+                  {item.name}
+                </Link>
+              );
+            })}
           </div>
 
           {/* Desktop Right */}
@@ -136,17 +144,24 @@ const Navbar: React.FC = () => {
             className="md:hidden overflow-hidden border-t border-border bg-background/95 backdrop-blur-xl"
           >
             <div className="max-w-7xl mx-auto px-5 py-4 flex flex-col gap-1">
-              {navItems.map((item) => (
-                <Link
-                  key={item.id}
-                  to={item.path}
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-foreground/65 hover:text-foreground rounded-xl hover:bg-foreground/[0.06] transition-all duration-200"
-                >
-                  {item.icon}
-                  {item.name}
-                </Link>
-              ))}
+              {navItems.map((item) => {
+                const isActive = location.pathname === item.path;
+                return (
+                  <Link
+                    key={item.id}
+                    to={item.path}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className={`flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-xl transition-all duration-200 ${
+                      isActive
+                        ? 'text-orange-400 bg-gradient-to-r from-orange-500/15 via-rose-500/10 to-transparent border border-orange-500/20'
+                        : 'text-foreground/65 hover:text-foreground hover:bg-foreground/[0.06]'
+                    }`}
+                  >
+                    {item.icon}
+                    {item.name}
+                  </Link>
+                );
+              })}
               <div className="pt-3 mt-2 border-t border-border flex flex-col gap-2">
                 {isAuthenticated ? (
                   <ProfileDropdown />
