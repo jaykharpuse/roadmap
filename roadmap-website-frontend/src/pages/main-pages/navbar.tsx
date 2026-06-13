@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import ProfileDropdown from '@/components/ProfileDropdown';
 import { useAuth } from '@/contexts/authContext';
 import { Link } from 'react-router-dom';
-import { Route, Menu, X, BookOpen, TrendingUp, Map, Sun, Moon } from 'lucide-react';
+import { Menu, X, BookOpen, TrendingUp, Map, Sun, Moon } from 'lucide-react';
+import appLogo from '@/assets/app_logo.svg';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from 'next-themes';
 
@@ -48,8 +49,8 @@ const Navbar: React.FC = () => {
 
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2.5 group">
-            <div className="relative w-8 h-8 rounded-lg bg-gradient-to-br from-orange-400 via-rose-500 to-violet-500 flex items-center justify-center shadow-lg shadow-orange-500/20 group-hover:shadow-orange-500/40 transition-shadow duration-300">
-              <Route className="w-4 h-4 text-white" />
+            <div className="relative w-10 h-10 rounded-lg bg-gradient-to-br from-orange-400 via-rose-500 to-violet-500 flex items-center justify-center shadow-lg shadow-orange-500/20 group-hover:shadow-orange-500/40 transition-shadow duration-300">
+              <img src={appLogo} alt="Tutoreez Logo" className="w-full h-full object-contain p-1" />
             </div>
             <span className="text-lg font-bold tracking-tight text-foreground" style={{ fontFamily: 'Syne, sans-serif' }}>
               Tutor<span className="text-gradient-brand">eez</span>

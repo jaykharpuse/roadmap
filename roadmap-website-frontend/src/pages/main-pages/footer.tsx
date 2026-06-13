@@ -1,8 +1,9 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { Linkedin, Github, Twitter, Route } from "lucide-react"
+import { Linkedin, Github, Twitter } from "lucide-react"
 import { Link } from "react-router-dom"
+import appLogo from "@/assets/app_logo.svg"
 
 export default function FooterSection() {
   const footerLinks = [
@@ -35,8 +36,8 @@ export default function FooterSection() {
             className="flex flex-col gap-3"
           >
             <Link to="/" className="flex items-center gap-2.5 w-fit group">
-              <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-orange-400 via-rose-500 to-violet-500 flex items-center justify-center shadow-lg shadow-orange-500/20">
-                <Route className="w-4 h-4 text-white" />
+              <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-orange-400 via-rose-500 to-violet-500 flex items-center justify-center shadow-lg shadow-orange-500/20">
+                <img src={appLogo} alt="Tutoreez Logo" className="w-full h-full object-contain p-1" />
               </div>
               <span
                 className="text-lg font-bold text-foreground tracking-tight"
@@ -109,10 +110,10 @@ export default function FooterSection() {
           viewport={{ once: true }}
           transition={{ duration: 0.5, delay: 0.2 }}
         >
-          <p className="text-xs text-foreground/30">
+          <p className="text-xs text-foreground/70">
             © {new Date().getFullYear()} Tutoreez. All rights reserved.
           </p>
-          <p className="text-xs text-foreground/25">
+          <p className="text-xs text-foreground/70">
             Made with ♥ for learners everywhere
           </p>
         </motion.div>

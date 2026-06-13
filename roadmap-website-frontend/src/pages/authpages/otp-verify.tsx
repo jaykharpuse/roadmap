@@ -4,7 +4,8 @@ import { z } from "zod";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
-import { Loader2, Route, ShieldCheck } from "lucide-react";
+import { Loader2, ShieldCheck } from "lucide-react";
+import appLogo from "@/assets/app_logo.svg";
 import { useNavigate, useParams } from "react-router-dom";
 import { useAppDispatch, useAppSelector } from "@/hooks/useAppDispatch";
 import { verifyUser } from "@/state/slices/authSlice";
@@ -55,8 +56,8 @@ const Verify: React.FC = () => {
       >
         <div className="flex justify-center mb-8">
           <Link to="/" className="flex items-center gap-2">
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-orange-400 via-rose-500 to-violet-500 flex items-center justify-center shadow-lg shadow-orange-500/25">
-              <Route className="w-5 h-5 text-white" />
+            <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-400 via-rose-500 to-violet-500 flex items-center justify-center shadow-lg shadow-orange-500/25">
+              <img src={appLogo} alt="Tutoreez Logo" className="w-full h-full object-contain p-1" />
             </div>
             <span className="text-xl font-bold text-foreground" style={{ fontFamily: 'Syne, sans-serif' }}>
               Tutor<span className="text-gradient-brand">eez</span>
